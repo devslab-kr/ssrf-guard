@@ -184,7 +184,7 @@ public RestClient conditionalRestClient(RestClient.Builder builder) {
 
 ## 버전 관리
 
-이 프로젝트는 **Semantic Release**와 **JGitVer**를 사용하여 완전 자동화된 버전 관리를 제공합니다.
+이 프로젝트는 **Semantic Release**를 사용하여 완전 자동화된 버전 관리를 제공합니다.
 
 ### 🚀 자동 릴리스 (추천)
 
@@ -201,10 +201,11 @@ git commit -m "feat: 새로운 기능 추가"
 git commit -m "feat!: 호환성 깨지는 변경"
 
 # main 브랜치에 푸시하면 자동으로:
-# 1. 버전 계산
-# 2. 태그 생성
-# 3. GitHub Release 생성
-# 4. JAR 파일 업로드
+# 1. 버전 계산 (1.0.0 → 1.1.0)
+# 2. pom.xml 버전 업데이트
+# 3. Git 태그 생성 (v1.1.0)
+# 4. JAR 빌드 및 GitHub Release 생성
+# 5. JAR 파일 업로드
 git push origin main
 ```
 
@@ -222,7 +223,3 @@ git push origin main
 git tag v1.0.0
 git push origin v1.0.0
 ```
-
-## 라이선스
-
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
