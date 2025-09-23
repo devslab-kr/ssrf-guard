@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/jlc488/ssrf-guard/compare/v1.0.0...v1.1.0) (2025-09-23)
+
+
+### Features
+
+* README.md 수정 및 releasers 템플릿 추가 ([4275d87](https://github.com/jlc488/ssrf-guard/commit/4275d87b606916d0293bb90129c54e9757288be5))
+
 # 1.0.0 (2025-09-23)
 
 
