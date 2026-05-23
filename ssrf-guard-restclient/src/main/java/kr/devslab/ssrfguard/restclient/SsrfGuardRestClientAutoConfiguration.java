@@ -1,8 +1,6 @@
 package kr.devslab.ssrfguard.restclient;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import kr.devslab.ssrfguard.core.HostPolicy;
-import kr.devslab.ssrfguard.core.MicrometerSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.NoOpSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardProperties;
@@ -16,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestClientCustomizer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
 import kr.devslab.ssrfguard.httpclient5.SsrfGuardHttpClient5AutoConfiguration;
@@ -34,8 +33,8 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
  *
  * <p>Registers, in order:
  * <ol>
- *   <li>{@link SsrfGuardMetrics} — Micrometer-backed if a {@code MeterRegistry}
- *       bean is present, otherwise no-op.</li>
+ *   <li>{@link SsrfGuardMetrics} — Micrometer-backed if Micrometer is on the
+ *       classpath ({@link MetricsConfiguration} below), otherwise no-op.</li>
  *   <li>{@link UrlPolicy} — pre-DNS scheme/host/port/IP-literal/userinfo gate.</li>
  *   <li>{@link SsrfGuardClientHttpRequestInterceptor} — wires the policy onto
  *       every {@code RestClient} the consumer builds.</li>
@@ -55,11 +54,22 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 @ConditionalOnProperty(prefix = "ssrf.guard", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class SsrfGuardRestClientAutoConfiguration {
 
+    /**
+     * No-op metrics fallback. Fires only when no other {@link SsrfGuardMetrics}
+     * bean is in the context — including when {@link MetricsConfiguration}
+     * registered the Micrometer-backed one (then this skips via
+     * {@code @ConditionalOnMissingBean}).
+     *
+     * <p>The outer class deliberately does <b>not</b> reference Micrometer
+     * types — the JVM never tries to resolve {@code MeterRegistry} just to
+     * load the outer autoconfig. Micrometer types live exclusively inside
+     * the {@link MetricsConfiguration} inner class, which is only loaded
+     * when {@code @ConditionalOnClass} passes.
+     */
     @Bean
-    @ConditionalOnMissingBean
-    SsrfGuardMetrics ssrfGuardMetrics(ObjectProvider<MeterRegistry> meterRegistry) {
-        MeterRegistry reg = meterRegistry.getIfAvailable();
-        return reg == null ? NoOpSsrfGuardMetrics.INSTANCE : new MicrometerSsrfGuardMetrics(reg);
+    @ConditionalOnMissingBean(SsrfGuardMetrics.class)
+    SsrfGuardMetrics ssrfGuardMetrics() {
+        return NoOpSsrfGuardMetrics.INSTANCE;
     }
 
     @Bean
@@ -109,5 +119,31 @@ public class SsrfGuardRestClientAutoConfiguration {
         return builder -> builder
                 .requestFactory(factory)
                 .requestInterceptor(interceptor);
+    }
+
+    /**
+     * Micrometer-backed metrics — only loaded when Micrometer is on the
+     * classpath. All Micrometer-typed signatures live here so that consumers
+     * without {@code micrometer-core} never trigger a
+     * {@code ClassNotFoundException}.
+     *
+     * <p>Uses {@code @ConditionalOnClass(name = ...)} (the string form) so
+     * Spring's ASM-based condition evaluator inspects the annotation without
+     * the JVM having to resolve {@link io.micrometer.core.instrument.MeterRegistry}
+     * — class presence is checked from the resource path.
+     */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")
+    static class MetricsConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(SsrfGuardMetrics.class)
+        SsrfGuardMetrics micrometerSsrfGuardMetrics(
+                ObjectProvider<io.micrometer.core.instrument.MeterRegistry> meterRegistry) {
+            var reg = meterRegistry.getIfAvailable();
+            return reg == null
+                    ? NoOpSsrfGuardMetrics.INSTANCE
+                    : new kr.devslab.ssrfguard.core.MicrometerSsrfGuardMetrics(reg);
+        }
     }
 }

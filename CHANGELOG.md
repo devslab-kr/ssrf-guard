@@ -7,6 +7,12 @@ The source of truth for the entries below is [docs/changelog.md](docs/changelog.
 
 ## [Unreleased]
 
+## [3.0.1] — Fix metrics bean classpath gate
+
+### Fixed
+
+- `ClassNotFoundException: io.micrometer.core.instrument.MeterRegistry` when consumers don't have `micrometer-core` on the classpath. The metrics bean factory method declared `ObjectProvider<MeterRegistry>` as a parameter, and the JVM resolves parameter types at class load time even when `ObjectProvider` would handle the missing bean. Fixed by moving the Micrometer-backed metrics bean into a static inner `@Configuration` class gated by `@ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")`, with a `NoOp` fallback in the outer autoconfig. Affected: `-restclient`, `-resttemplate` (via `-restclient`), `-webclient`, `-feign`, `-springai`. Full notes in [docs/changelog.md](docs/changelog.md#301--fix-metrics-bean-classpath-gate).
+
 ## [3.0.0] — Multi-module + LLM agent SSRF defense
 
 Split into client-specific modules and added Spring AI Tool URL validation. Full notes in [docs/changelog.md](docs/changelog.md#300--multi-module--llm-agent-ssrf-defense).
@@ -52,7 +58,8 @@ semantic-release rollup. Tagged but **never published to Maven Central**.
 
 Initial public release. Tagged but **never published to Maven Central**.
 
-[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v3.0.1
 [3.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v3.0.0
 [2.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v2.0.0
 [1.1.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v1.1.0

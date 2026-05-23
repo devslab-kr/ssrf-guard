@@ -6,6 +6,17 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
+## [3.0.1] — 메트릭 빈 classpath 게이트 수정
+
+### Fixed
+
+- **`ClassNotFoundException: io.micrometer.core.instrument.MeterRegistry`** — `micrometer-core`가 classpath에 없는 소비자가 부팅 실패. `-restclient`, `-resttemplate` (via `-restclient`), `-webclient`, `-feign`, `-springai` 전부 영향. 메트릭 빈 팩토리 메서드가 `ObjectProvider<MeterRegistry>`를 파라미터로 선언했고, `ObjectProvider`는 빈이 없을 때 우아하게 처리하지만 파라미터 타입 자체는 클래스 로드 시점에 JVM이 resolve하기 때문.
+- Micrometer 기반 메트릭 빈을 static inner `@Configuration`으로 격리하고 `@ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")` (string form — Spring ASM 조건 평가기가 JVM 로드 없이 어노테이션 검사)으로 게이트. 외부 자동설정은 `@ConditionalOnMissingBean(SsrfGuardMetrics.class)` 조건으로 `NoOpSsrfGuardMetrics` fallback `@Bean` 등록.
+
+### Migration
+
+v3.0.1로 그냥 올리기 — 소비자 코드 변경 없음. v3.0.0의 이 버그를 우회하려고 `io.micrometer:micrometer-core`를 빌드에 추가했었다면(메트릭 실제로 안 쓰면서) 이제 제거 가능.
+
 ## [3.0.0] — 멀티모듈 + LLM 에이전트 SSRF 방어
 
 v2.0.0 스타터는 단일 jar로 Spring `RestClient`만 지원했지만, v3.0.0은 HTTP 클라이언트 경계로 코드를 분할하고 모든 JVM HTTP 스택에 대한 모듈을 추가했으며, 지난 2년간 LLM 에이전트가 만들어온 SSRF 표면을 막는 **Spring AI Tool 래퍼**를 출시합니다.

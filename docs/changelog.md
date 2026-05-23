@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [3.0.1] — Fix metrics bean classpath gate
+
+### Fixed
+
+- **`ClassNotFoundException: io.micrometer.core.instrument.MeterRegistry`** when consumers don't have `micrometer-core` on the classpath. Affected every Spring autoconfig module — `-restclient`, `-resttemplate` (via `-restclient`), `-webclient`, `-feign`, `-springai` — because the metrics bean factory method declared `ObjectProvider<MeterRegistry>` as a parameter, and the JVM resolves parameter types at class load time even when `ObjectProvider` would otherwise handle the missing bean gracefully.
+- The fix moves the Micrometer-backed metrics bean into a static inner `@Configuration` class gated by `@ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")` (string form, so Spring's ASM-based condition evaluator inspects the annotation without JVM-loading Micrometer). The outer autoconfig declares a fallback `@Bean` returning `NoOpSsrfGuardMetrics` under `@ConditionalOnMissingBean(SsrfGuardMetrics.class)`.
+
+### Migration
+
+Drop in v3.0.1 — no consumer code changes. If you previously worked around the v3.0.0 bug by adding `io.micrometer:micrometer-core` to your build only because of this error (not because you actually wanted metrics), the dep can come out now.
+
 ## [3.0.0] — Multi-module + LLM agent SSRF defense
 
 The v2.0.0 starter was a single jar that only worked with Spring's `RestClient`. v3.0.0 splits the codebase along client boundaries, adds support for every common JVM HTTP stack, and ships a **Spring AI Tool wrapper** that closes the SSRF surface LLM agents have been introducing for the last two years.
