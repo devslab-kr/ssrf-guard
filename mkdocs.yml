@@ -1,0 +1,124 @@
+site_name: ssrf-guard
+site_description: SSRF protection for Spring Boot — whitelist-based outbound HTTP guard with private-network blocking, redirect validation, and TOCTOU mitigation.
+site_url: https://ssrf-guard.devslab.kr/
+site_author: Devslab
+copyright: Copyright © 2026 Devslab
+
+repo_name: devslab-kr/ssrf-guard
+repo_url: https://github.com/devslab-kr/ssrf-guard
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+    - content.tabs.link
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: red
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search:
+      lang:
+        - en
+        - ko
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: ko
+          name: 한국어
+          build: true
+          nav_translations:
+            Home: 홈
+            Getting Started: 시작하기
+            Installation: 설치
+            Quickstart: 빠른 시작
+            Guides: 가이드
+            Security Model: 보안 모델
+            Configuration: 설정
+            Changelog: 변경 이력
+            Contributing: 기여하기
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - footnotes
+  - tables
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/devslab-kr/ssrf-guard
+    - icon: fontawesome/solid/globe
+      link: https://devslab.kr
+  alternate:
+    - name: English
+      link: /
+      lang: en
+    - name: 한국어
+      link: /ko/
+      lang: ko
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Quickstart: getting-started/quickstart.md
+  - Guides:
+      - Security Model: guides/security-model.md
+      - Configuration: guides/configuration.md
+  - Changelog: changelog.md
+  - Contributing: contributing.md
