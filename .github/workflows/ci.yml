@@ -44,16 +44,13 @@ jobs:
         with:
           # Multi-module layout — each subproject produces its own jacoco XML.
           # Codecov merges them server-side when multiple files are listed.
-          files: >-
-            ./ssrf-guard-core/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-httpclient5/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-restclient/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-resttemplate/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-webclient/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-feign/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-springai/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-jdkhttp/build/reports/jacoco/test/jacocoTestReport.xml,
-            ./ssrf-guard-okhttp/build/reports/jacoco/test/jacocoTestReport.xml
+          # NOTE: comma-separated single line on purpose. The previous `>-`
+          # folded-scalar form joined lines with ", " (comma + SPACE), and
+          # codecov-action splits on commas only — every entry after the first
+          # ended up with a leading space and failed the explicit-path lookup
+          # (codecov then fell back to a directory scan, so uploads worked but
+          # the log carried a noisy "not_found_files" warning every run).
+          files: ./ssrf-guard-core/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-httpclient5/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-restclient/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-resttemplate/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-webclient/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-feign/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-springai/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-jdkhttp/build/reports/jacoco/test/jacocoTestReport.xml,./ssrf-guard-okhttp/build/reports/jacoco/test/jacocoTestReport.xml
           flags: unittests
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
