@@ -7,6 +7,24 @@ The source of truth for the entries below is [docs/changelog.md](docs/changelog.
 
 ## [Unreleased]
 
+## [3.0.0] — Multi-module + LLM agent SSRF defense
+
+Split into client-specific modules and added Spring AI Tool URL validation. Full notes in [docs/changelog.md](docs/changelog.md#300--multi-module--llm-agent-ssrf-defense).
+
+### Added
+
+- New modules: `ssrf-guard-resttemplate`, `ssrf-guard-webclient`, `ssrf-guard-feign`, **`ssrf-guard-springai`**, `ssrf-guard-jdkhttp`, `ssrf-guard-okhttp`.
+- IP-literal host rejection (decimal, hex, octal, partial, IPv6).
+- Userinfo (`user:pass@host`) rejection.
+- IPv4-mapped IPv6 + 6to4 unmapping (catches `::ffff:10.0.0.5` and `2002:0a00::`).
+- Micrometer metrics (`ssrf_guard_blocked_total`, `ssrf_guard_allowed_total`) auto-wired when `MeterRegistry` is on the classpath.
+- Structured WARN logs on every block decision.
+
+### Changed — BREAKING
+
+- Package renames — `kr.devslab.ssrfguard.security.*` types split across `-core`, `-httpclient5`, `-restclient`. Full mapping in [docs/changelog.md](docs/changelog.md#300--multi-module--llm-agent-ssrf-defense).
+- `SecurityException` → `SsrfGuardException` (still a `SecurityException` subclass).
+
 ## [2.0.0] — Rebrand to `kr.devslab:ssrf-guard`
 
 ### Changed
@@ -34,7 +52,8 @@ semantic-release rollup. Tagged but **never published to Maven Central**.
 
 Initial public release. Tagged but **never published to Maven Central**.
 
-[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v3.0.0
 [2.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v2.0.0
 [1.1.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v1.1.0
 [1.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v1.0.0

@@ -2,7 +2,7 @@
 
 **English** · [한국어](README.ko.md)
 
-> SSRF (Server-Side Request Forgery) protection for Spring Boot — whitelist-based outbound HTTP guard with private-network blocking, redirect validation, and TOCTOU mitigation.
+> SSRF (Server-Side Request Forgery) protection for the JVM — whitelist-based outbound HTTP guard with private-network blocking, redirect validation, TOCTOU mitigation, and **Spring AI tool URL validation** to close the LLM-agent SSRF surface.
 
 [![Maven Central](https://img.shields.io/maven-central/v/kr.devslab/ssrf-guard.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard)
 [![CI](https://github.com/devslab-kr/ssrf-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/devslab-kr/ssrf-guard/actions/workflows/ci.yml)
@@ -13,16 +13,53 @@
 
 📖 **[Documentation → ssrf-guard.devslab.kr](https://ssrf-guard.devslab.kr/)**
 
+## Module matrix (v3.0.0)
+
+Pick the module matching your HTTP client. The core (`ssrf-guard-core`) follows transitively.
+
+| Module | Use case | Spring? |
+|---|---|---|
+| **`ssrf-guard`** | Meta artifact — RestClient + HttpClient5 (v2.0.0 back-compat) | ✅ |
+| `ssrf-guard-restclient` | Spring 6.1+ `RestClient` | ✅ |
+| `ssrf-guard-resttemplate` | Spring `RestTemplate` | ✅ |
+| `ssrf-guard-webclient` | Spring WebFlux `WebClient` | ✅ |
+| `ssrf-guard-feign` | Spring Cloud OpenFeign | ✅ |
+| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` URL validation — closes the LLM-agent SSRF surface | ✅ |
+| `ssrf-guard-httpclient5` | Apache HttpClient 5 directly | — |
+| `ssrf-guard-jdkhttp` | `java.net.http.HttpClient` | — |
+| `ssrf-guard-okhttp` | OkHttp | — |
+
 ## What it does
 
-Every outbound HTTP call from your Spring Boot service runs through a four-layer SSRF filter before a socket is ever opened:
+Every outbound HTTP call from your service runs through a four-layer SSRF filter before a socket is ever opened:
 
-1. **Scheme / host / port** — string-level interceptor rejects anything outside the configured allow-lists, no DNS yet.
-2. **Whitelist re-check at DNS time** — same host policy applied a second time when the hostname is resolved, closing the gap a forged URL might have slipped through.
-3. **Private-network IP filter** — loopback (`127.0.0.0/8`, `::1`), RFC-1918 (`10/8`, `172.16/12`, `192.168/16`), link-local (`169.254/16`, `fe80::/10`, including the AWS metadata endpoint), CGNAT (`100.64/10`), and IPv6 ULA (`fc00::/7`) are all blocked.
-4. **Redirect re-validation** — every 3xx hop runs through the same scheme/host/IP rules. An attacker can't whitelist `example.com` and then redirect to `169.254.169.254`.
+1. **URL-time check (front line)** — scheme / host / port / IP-literal-form / userinfo rejected at the cheapest gate, before any DNS lookup. Catches the obfuscated-IP bypass class (`http://2130706433/` → `127.0.0.1`).
+2. **DNS-time whitelist re-check** — same host policy applied a second time when the hostname is resolved.
+3. **Private-network IP filter** — loopback, RFC-1918, link-local (incl. AWS metadata at `169.254.169.254`), CGNAT, IPv6 ULA, **IPv4-mapped IPv6 + 6to4 unmapping** (`::ffff:10.0.0.5` and `2002:0a00::` correctly classified as private).
+4. **Redirect re-validation** — every 3xx hop runs through the same checks. An attacker can't whitelist `example.com` and then redirect to `169.254.169.254`.
 
 The same `InetAddress` array the resolver validated is what HttpClient hands to `Socket.connect()` — TOCTOU window closed.
+
+## Spring AI tool calls — the new SSRF surface
+
+LLM agents that take URLs as tool arguments are SSRF vectors by default:
+
+```java
+@Tool("Fetch a URL")
+String fetchUrl(String url) {
+    return restClient.get().uri(url).retrieve().body(String.class);
+    //          ↑ attacker controls the URL — one-line SSRF
+}
+```
+
+`ssrf-guard-springai` wraps every `ToolCallback` so URL-shaped arguments are validated against the policy before the tool runs, and on rejection returns a structured error string the LLM can interpret and recover from.
+
+```java
+ToolCallback[] raw = ToolCallbacks.from(new MyTools());
+ToolCallback[] safe = SsrfGuardedToolCallbacks.wrap(raw, urlPolicy);
+```
+
+Auto-config picks it up — any `@Bean ToolCallback` gets wrapped via a `BeanPostProcessor`.
 
 ## Install
 
@@ -32,17 +69,17 @@ The same `InetAddress` array the resolver validated is what HttpClient hands to 
 <dependency>
     <groupId>kr.devslab</groupId>
     <artifactId>ssrf-guard</artifactId>
-    <version>2.0.0</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("kr.devslab:ssrf-guard:2.0.0")
+implementation("kr.devslab:ssrf-guard:3.0.0")
 ```
 
-> **Upgrading from `com.devs.lab:ssrf-guard-spring-boot-starter` 1.x?** The coordinate, package, and minimum Spring Boot version all changed in v2.0.0 — see the [v2.0.0 changelog](CHANGELOG.md#200--rebrand-to-krdevslabssrf-guard).
+> **Upgrading from v2.0.0?** The meta `kr.devslab:ssrf-guard:3.0.0` keeps the v2.0.0 API working — pulls in `-core`, `-httpclient5`, `-restclient` transitively. Direct imports of `kr.devslab.ssrfguard.security.*` need updates — see the [v3.0.0 changelog](CHANGELOG.md#300--multi-module--llm-agent-ssrf-defense) for the package-rename mapping.
 
 ## Configuration
 
@@ -53,6 +90,8 @@ ssrf:
     allowed-schemes: [ "http", "https" ]
     allowed-ports:  [ -1, 80, 443 ]        # -1 = default port for the scheme
     block-private-networks: true
+    reject-ip-literal-hosts: true          # NEW v3.0.0 — block http://127.0.0.1, http://2130706433, etc.
+    reject-user-info: true                 # NEW v3.0.0 — block https://user:pass@host/...
     follow-redirects: true
 
     # Exact-match whitelist
@@ -98,27 +137,49 @@ public class PartnerApi {
 What happens when the request isn't whitelisted:
 
 ```text
-java.lang.SecurityException: Host not allowed: evil.com
-    at kr.devslab.ssrfguard.security.SsrfGuardInterceptor.intercept(...)
+kr.devslab.ssrfguard.core.SsrfGuardException: Host not allowed: evil.com
+    (reason=blocked_host, scheme=https, host=evil.com)
+    at kr.devslab.ssrfguard.core.UrlPolicy.reject(...)
 ```
 
-## What auto-configuration registers
+`SsrfGuardException extends SecurityException` — v2.0.0 `catch (SecurityException e)` code keeps working. Catch the new type to read `e.reason()` (a `BlockReason` enum: `blocked_host`, `blocked_private_ip`, `blocked_ip_literal`, `blocked_userinfo`, `blocked_scheme`, `blocked_port`, `blocked_redirect`).
 
-When `ssrf.guard.enabled=true` (the default), `SsrfGuardAutoConfiguration` activates and registers:
+## Observability (auto-wired with Micrometer)
+
+```
+ssrf_guard_blocked_total{reason="blocked_private_ip", scheme="http"} 42
+ssrf_guard_allowed_total{scheme="https"} 13042
+```
+
+Plus a structured WARN log on every block:
+
+```
+WARN k.d.s.core.UrlPolicy : ssrf-guard: Host not allowed: evil.com (reason=blocked_host, scheme=https, host=evil.com)
+```
+
+Tags are bounded (`reason` is an enum, `scheme` is http/https) — Prometheus / Datadog / CloudWatch ingest happily.
+
+## What auto-configuration registers (RestClient module)
+
+When `ssrf.guard.enabled=true` (the default), the RestClient autoconfig activates and registers:
 
 - `SafeDnsResolver` — whitelist + private-IP filter, plugged into Apache HttpClient 5's connection manager
 - `CloseableHttpClient` — built with the resolver wired in and (when redirects are enabled) a `SafeRedirectStrategy`
 - `HttpComponentsClientHttpRequestFactory` — with configured connect/read timeouts
-- `SsrfGuardInterceptor` — front-line scheme/host/port check
+- `UrlPolicy` — the front-line URL-time gate (scheme, host, port, IP-literal, userinfo)
+- `SsrfGuardClientHttpRequestInterceptor` — Spring `ClientHttpRequestInterceptor` that delegates to the policy
+- `SsrfGuardMetrics` — Micrometer-backed when a `MeterRegistry` is present, no-op otherwise
 - `RestClientCustomizer` (named `ssrfRestClientCustomizer`) — pins the factory + interceptor onto Spring Boot's auto-built `RestClient.Builder`
 
-Every bean is `@ConditionalOnMissingBean`, so you can swap any piece for your own implementation (e.g., provide a `CloseableHttpClient` with your auth headers and keep the rest of the SSRF policy intact).
+Each module has its own auto-config — `SsrfGuardRestTemplateAutoConfiguration`, `SsrfGuardWebClientAutoConfiguration`, `SsrfGuardFeignAutoConfiguration`, `SsrfGuardSpringAiAutoConfiguration`. They all reuse the same `UrlPolicy` and `SsrfGuardMetrics` beans. Every bean is `@ConditionalOnMissingBean`, so you can swap any piece.
 
 ## Requirements
 
 - Java 21+
-- Spring Boot 3.5+
-- Apache HttpClient 5 (pulled in transitively)
+- Spring Boot 3.5+ (for Spring-based modules)
+- Spring AI 1.0+ (for the `springai` module)
+- Spring Cloud 2024.0+ (for the `feign` module)
+- Apache HttpClient 5 (pulled in transitively by `-httpclient5`, `-restclient`, `-resttemplate`)
 
 ## License
 

@@ -1,176 +1,118 @@
-// Single-module Gradle build. The on-disk jar filename and the published Maven
-// artifact id are both `ssrf-guard` (the short name picked for v2.0.0 to match
-// the api-log starter convention; the legacy 1.x coordinate was
-// `com.devs.lab:ssrf-guard-spring-boot-starter`).
-
+// Root build — no jar. All publishable artifacts live in subprojects.
 plugins {
-    `java-library`
-    jacoco
-    id("org.springframework.boot") version "3.5.6" apply false
-    id("io.spring.dependency-management") version "1.1.6"
-    id("com.vanniktech.maven.publish") version "0.30.0"
+    id("io.spring.dependency-management") version "1.1.6" apply false
+    id("com.vanniktech.maven.publish") version "0.30.0" apply false
 }
 
-group = providers.gradleProperty("GROUP").get()
-version = providers.gradleProperty("VERSION").get()
+// Aggregate test report — `./gradlew test` at the root runs every subproject's
+// tests; this collects them into a single HTML/XML for CI convenience.
+val rootGroup: String = providers.gradleProperty("GROUP").get()
+val rootVersion: String = providers.gradleProperty("VERSION").get()
 
-base {
-    // Local build/libs/*.jar filename (Vanniktech pins the Maven coordinate
-    // separately via mavenPublishing.coordinates(...) below).
-    archivesName.set("ssrf-guard")
+allprojects {
+    group = rootGroup
+    version = rootVersion
 }
 
-// Vanniktech's javadoc jar task hardcodes its archive base name to
-// `<project>-maven-javadoc` and only sets it inside its plugin's own
-// afterEvaluate. Without this override the GitHub Release ends up with a
-// confusing `ssrf-guard-maven-javadoc-X.Y.Z-javadoc.jar`. Configure inside
-// afterEvaluate so we're the last writer.
-afterEvaluate {
-    tasks.named<AbstractArchiveTask>("mavenPlainJavadocJar").configure {
-        archiveBaseName.set("ssrf-guard")
+subprojects {
+    // All publishable subprojects share the same plugin set + Java toolchain.
+    // The few subprojects that don't publish (none currently) can opt out by
+    // not applying maven.publish.
+    apply(plugin = "java-library")
+    apply(plugin = "jacoco")
+    apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "com.vanniktech.maven.publish")
+
+    // Repositories are pinned in settings.gradle.kts via
+    // dependencyResolutionManagement (FAIL_ON_PROJECT_REPOS). Per-subproject
+    // overrides would defeat the central pin.
+
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        }
+        withSourcesJar()
+        withJavadocJar()
     }
-}
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(21))
+    tasks.withType<JavaCompile>().configureEach {
+        options.encoding = "UTF-8"
+        // -parameters keeps AOP-readable param names; -Xlint:all minus the
+        // noisy classfile/processing/serial categories so -Werror stays
+        // useful for real code issues.
+        options.compilerArgs.addAll(listOf(
+            "-parameters",
+            "-Xlint:all,-classfile,-processing,-serial",
+            "-Werror"
+        ))
     }
-}
 
-tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
-    // -parameters: keep AOP-readable param names. -Xlint enabled but the
-    // noisy categories (classfile/processing/serial) are excluded so -Werror
-    // stays usable for real code issues without tripping on annotation-
-    // processor noise.
-    options.compilerArgs.addAll(listOf(
-        "-parameters",
-        "-Xlint:all,-classfile,-processing,-serial",
-        "-Werror"
-    ))
-}
-
-tasks.withType<Javadoc>().configureEach {
-    options.encoding = "UTF-8"
-    (options as StandardJavadocDocletOptions).apply {
-        addBooleanOption("Xdoclint:none", true)
-        addBooleanOption("html5", true)
-        locale = "en_US"
+    tasks.withType<Javadoc>().configureEach {
+        options.encoding = "UTF-8"
+        (options as StandardJavadocDocletOptions).apply {
+            addBooleanOption("Xdoclint:none", true)
+            addBooleanOption("html5", true)
+            locale = "en_US"
+        }
     }
-}
 
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
+    configure<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension> {
+        imports {
+            mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.6")
+            // Spring Cloud BOM — pins feign-core / spring-cloud-openfeign for
+            // the feign module. Aligned with Spring Boot 3.5.x.
+            mavenBom("org.springframework.cloud:spring-cloud-dependencies:2024.0.0")
+        }
     }
-}
 
-dependencies {
-    // Pulled in transitively for every consumer:
-    api("org.springframework.boot:spring-boot-autoconfigure")
-    api("org.springframework.boot:spring-boot-starter")
-
-    // Apache HttpClient 5 — the wrapped RestClient runs on top of this.
-    api("org.apache.httpcomponents.client5:httpclient5")
-
-    // Lombok — compile + annotation-processor only.
-    compileOnly("org.projectlombok:lombok")
-    annotationProcessor("org.projectlombok:lombok")
-
-    // Auto-configuration metadata processor.
-    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-
-    // Spring Web — RestClient lives here. compileOnly so pure-WebFlux consumers
-    // (who don't need RestClient at all) aren't forced to pull spring-web.
-    // The autoconfig is gated by @ConditionalOnClass(RestClient.class) so its
-    // absence is silent.
-    compileOnly("org.springframework.boot:spring-boot-starter-web")
-
-    // Silences cosmetic "cannot find javax.annotation.Nonnull" warnings from
-    // resolving Spring's @Nullable. Not exposed to consumers.
-    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-
-    // Test
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.boot:spring-boot-starter-web")
-    testImplementation("org.assertj:assertj-core")
-
-    // MockWebServer drives the integration tests against a real socket so the
-    // SSRF interceptor + DNS resolver + redirect strategy are exercised on a
-    // genuine HTTP stack rather than mocked.
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-
-    // Explicit launcher pin. JUnit Jupiter 5.11+ requires
-    // junit-platform-launcher >= 1.11; Gradle 8.10 still bundles 1.10.x.
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-
-tasks.test {
-    useJUnitPlatform()
-    testLogging {
-        events("passed", "skipped", "failed")
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-        showStandardStreams = false
+    tasks.withType<Test>().configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+            exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+            showStandardStreams = false
+        }
+        systemProperty("file.encoding", "UTF-8")
+        finalizedBy(tasks.named("jacocoTestReport"))
     }
-    systemProperty("file.encoding", "UTF-8")
-    finalizedBy(tasks.jacocoTestReport)
-}
 
-jacoco {
-    toolVersion = "0.8.13"
-}
-
-tasks.jacocoTestReport {
-    dependsOn(tasks.test)
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-        csv.required.set(false)
+    configure<JacocoPluginExtension> {
+        toolVersion = "0.8.13"
     }
-}
 
-// Same lesson as api-log: subproject publications under the Spring Boot BOM
-// have no explicit dep versions, so Gradle's module-metadata validator
-// rejects them. `versionMapping { allVariants { fromResolutionResult() } }`
-// pins the BOM-resolved versions into the generated .module and .pom so
-// downstream consumers don't need our BOM.
-publishing {
-    publications.withType<MavenPublication>().configureEach {
-        versionMapping {
-            allVariants {
-                fromResolutionResult()
+    tasks.named<JacocoReport>("jacocoTestReport").configure {
+        dependsOn(tasks.named("test"))
+        reports {
+            xml.required.set(true)
+            html.required.set(true)
+            csv.required.set(false)
+        }
+    }
+
+    // Vanniktech's auto-generated javadoc jar hardcodes its archive base name
+    // to `<project>-maven-javadoc`; without this the GitHub Release ends up
+    // with names like `ssrf-guard-core-maven-javadoc-X.Y.Z-javadoc.jar`.
+    // Pin it inside afterEvaluate so we win the last-writer race against the
+    // plugin's own configuration phase.
+    afterEvaluate {
+        tasks.findByName("mavenPlainJavadocJar")?.let {
+            (it as AbstractArchiveTask).archiveBaseName.set(project.name)
+        }
+
+        // Same lesson as the api-log starter: subproject publications under
+        // the Spring Boot BOM have no explicit dep versions, so Gradle's
+        // module-metadata validator rejects them. `versionMapping {
+        // allVariants { fromResolutionResult() } }` pins the BOM-resolved
+        // versions into the generated .module + .pom so downstream consumers
+        // don't need our BOMs at all.
+        extensions.findByType<PublishingExtension>()?.apply {
+            publications.withType<MavenPublication>().configureEach {
+                versionMapping {
+                    allVariants {
+                        fromResolutionResult()
+                    }
+                }
             }
-        }
-    }
-}
-
-mavenPublishing {
-    coordinates(
-        providers.gradleProperty("GROUP").get(),
-        "ssrf-guard",
-        providers.gradleProperty("VERSION").get()
-    )
-
-    pom {
-        developers {
-            developer {
-                id.set(providers.gradleProperty("POM_DEVELOPER_ID"))
-                name.set(providers.gradleProperty("POM_DEVELOPER_NAME"))
-                url.set(providers.gradleProperty("POM_DEVELOPER_URL"))
-                email.set(providers.gradleProperty("POM_DEVELOPER_EMAIL"))
-                organization.set(providers.gradleProperty("POM_ORGANIZATION_NAME"))
-                organizationUrl.set(providers.gradleProperty("POM_ORGANIZATION_URL"))
-            }
-        }
-
-        organization {
-            name.set(providers.gradleProperty("POM_ORGANIZATION_NAME"))
-            url.set(providers.gradleProperty("POM_ORGANIZATION_URL"))
-        }
-
-        issueManagement {
-            system.set(providers.gradleProperty("POM_ISSUE_SYSTEM"))
-            url.set(providers.gradleProperty("POM_ISSUE_URL"))
         }
     }
 }
