@@ -87,17 +87,17 @@ ToolCallback[] safe = SsrfGuardedToolCallbacks.wrap(raw, urlPolicy);
 <dependency>
     <groupId>kr.devslab</groupId>
     <artifactId>ssrf-guard</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
 </dependency>
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("kr.devslab:ssrf-guard:3.0.0")
+implementation("kr.devslab:ssrf-guard:3.1.0")
 ```
 
-> **v2.0.0에서 업그레이드?** 메타 `kr.devslab:ssrf-guard:3.0.0`이 v2.0.0 API 유지 — `-core`, `-httpclient5`, `-restclient`를 transitive로 끌어옴. `kr.devslab.ssrfguard.security.*`를 직접 import한 코드는 업데이트 필요 — [v3.0.0 changelog](CHANGELOG.md#300--multi-module--llm-agent-ssrf-defense) 패키지 매핑 참고.
+> **v2.0.0에서 업그레이드?** 메타 `kr.devslab:ssrf-guard:3.1.0`이 v2.0.0 API 유지 — `-core`, `-httpclient5`, `-restclient`를 transitive로 끌어옴. `kr.devslab.ssrfguard.security.*`를 직접 import한 코드는 업데이트 필요 — [v3.0.0 changelog](CHANGELOG.md#300--multi-module--llm-agent-ssrf-defense) 패키지 매핑 참고.
 
 ## 설정
 
