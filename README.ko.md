@@ -13,6 +13,22 @@
 
 📖 **[문서 → ssrf-guard.devslab.kr](https://ssrf-guard.devslab.kr/ko/)**
 
+> 💬 질문, 아이디어, 사용 사례 공유는 [**devslab-examples Discussions**](https://github.com/devslab-kr/devslab-examples/discussions)에서 — 영/한 둘 다 OK, 라이브러리 만든 메인테이너가 직접 답변.
+
+## 실행 가능한 예제
+
+아래에 설명된 모든 모듈을 사용해보는 독립 Spring Boot 프로젝트들 — clone, `./gradlew bootRun`, curl. 복사-붙여넣기 안 해도 됨, 예제가 end-to-end로 wiring되어 있음 (스모크 테스트 포함).
+
+| 데모 | 보여주는 것 |
+| --- | --- |
+| [`ssrf-guard-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-demo) | RestClient + RestTemplate + WebClient 모두 하나의 `UrlPolicy`로 wiring. 15가지 공격 매트릭스 엔드포인트, Micrometer 메트릭 |
+| [`ssrf-guard-springai-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-springai-demo) | ⭐ LLM 에이전트 SSRF 방어. 가짜 LLM 드라이버 — API 키 불필요 |
+| [`ssrf-guard-feign-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-feign-demo) | Spring Cloud OpenFeign `RequestInterceptor` 통합 |
+| [`ssrf-guard-jdkhttp-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-jdkhttp-demo) | `java.net.http.HttpClient` 래퍼 — 라이브러리 자체엔 Spring 의존성 없음 |
+| [`ssrf-guard-okhttp-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-okhttp-demo) | OkHttp `Interceptor` + `Dns` 통합 — Spring 필요 없음 |
+
+전체 인덱스: [github.com/devslab-kr/devslab-examples](https://github.com/devslab-kr/devslab-examples).
+
 ## 모듈 매트릭스 (v3.0.0)
 
 쓰는 HTTP 클라이언트에 맞는 모듈만 고르세요. `ssrf-guard-core`는 transitive로 따라옴.

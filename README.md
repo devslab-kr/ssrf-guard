@@ -13,6 +13,22 @@
 
 📖 **[Documentation → ssrf-guard.devslab.kr](https://ssrf-guard.devslab.kr/)**
 
+> 💬 Questions, ideas, sharing your application? Head to [**devslab-examples Discussions**](https://github.com/devslab-kr/devslab-examples/discussions) — bilingual, maintained by the same folks who write the libraries.
+
+## Runnable examples
+
+Standalone Spring Boot projects that exercise every module documented below — clone, `./gradlew bootRun`, curl. No copy-paste; the examples are wired end-to-end (smoke tests included).
+
+| Demo | Showcases |
+| --- | --- |
+| [`ssrf-guard-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-demo) | RestClient + RestTemplate + WebClient all wired through one `UrlPolicy`. 15-pattern attack matrix endpoint, Micrometer metrics |
+| [`ssrf-guard-springai-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-springai-demo) | ⭐ LLM agent SSRF defense. Fake-LLM driver, no API key needed |
+| [`ssrf-guard-feign-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-feign-demo) | Spring Cloud OpenFeign `RequestInterceptor` integration |
+| [`ssrf-guard-jdkhttp-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-jdkhttp-demo) | `java.net.http.HttpClient` wrapper — no Spring dependency on the library itself |
+| [`ssrf-guard-okhttp-demo`](https://github.com/devslab-kr/devslab-examples/tree/main/ssrf-guard-okhttp-demo) | OkHttp `Interceptor` + `Dns` integration — also no Spring |
+
+Full index at [github.com/devslab-kr/devslab-examples](https://github.com/devslab-kr/devslab-examples).
+
 ## Module matrix (v3.0.0)
 
 Pick the module matching your HTTP client. The core (`ssrf-guard-core`) follows transitively.
