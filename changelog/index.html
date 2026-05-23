@@ -1,0 +1,1706 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="SSRF protection for Spring Boot — whitelist-based outbound HTTP guard with private-network blocking, redirect validation, and TOCTOU mitigation.">
+      
+      
+        <meta name="author" content="Devslab">
+      
+      
+        <link rel="canonical" href="https://ssrf-guard.devslab.kr/changelog/">
+      
+      
+        <link rel="prev" href="../guides/performance/">
+      
+      
+        <link rel="next" href="../contributing/">
+      
+      
+        
+          <link rel="alternate" href="./" hreflang="en">
+        
+          <link rel="alternate" href="../ko/changelog/" hreflang="ko">
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Changelog - ssrf-guard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#changelog" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="ssrf-guard" class="md-header__button md-logo" aria-label="ssrf-guard" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            ssrf-guard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Changelog
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+      <div class="md-header__option">
+  <div class="md-select">
+    
+    <button class="md-header__button md-icon" aria-label="Select language">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m12.87 15.07-2.54-2.51.03-.03A17.5 17.5 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2zm-2.62 7 1.62-4.33L19.12 17z"/></svg>
+    </button>
+    <div class="md-select__inner">
+      <ul class="md-select__list">
+        
+          <li class="md-select__item">
+            <a href="./" hreflang="en" class="md-select__link">
+              English
+            </a>
+          </li>
+        
+          <li class="md-select__item">
+            <a href="../ko/changelog/" hreflang="ko" class="md-select__link">
+              한국어
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</div>
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/devslab-kr/ssrf-guard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devslab-kr/ssrf-guard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/installation/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../guides/security-model/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="ssrf-guard" class="md-nav__button md-logo" aria-label="ssrf-guard" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    ssrf-guard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/devslab-kr/ssrf-guard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    devslab-kr/ssrf-guard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/security-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Performance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#310-llm-core-extraction-langchain4j-webclient-dns-gap-graalvm-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#301-fix-metrics-bean-classpath-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [3.0.1] — Fix metrics bean classpath gate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[3.0.1] — Fix metrics bean classpath gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300-multi-module-llm-agent-ssrf-defense" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [3.0.0] — Multi-module + LLM agent SSRF defense
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[3.0.0] — Multi-module + LLM agent SSRF defense">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added-new-modules-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — new modules (opt-in)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-defense-in-depth-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — defense-in-depth hardening
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed — BREAKING
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-rebrand-to-krdevslabssrf-guard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.0.0] — Rebrand to kr.devslab:ssrf-guard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.0.0] — Rebrand to kr.devslab:ssrf-guard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2025-09-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] — 2025-09-23
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2025-09-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] — 2025-09-23
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#unreleased" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [Unreleased]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#310-llm-core-extraction-langchain4j-webclient-dns-gap-graalvm-hints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#301-fix-metrics-bean-classpath-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [3.0.1] — Fix metrics bean classpath gate
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[3.0.1] — Fix metrics bean classpath gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fixed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#300-multi-module-llm-agent-ssrf-defense" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [3.0.0] — Multi-module + LLM agent SSRF defense
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[3.0.0] — Multi-module + LLM agent SSRF defense">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#added-new-modules-opt-in" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — new modules (opt-in)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-defense-in-depth-hardening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — defense-in-depth hardening
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added-observability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added — observability
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#changed-breaking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed — BREAKING
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#200-rebrand-to-krdevslabssrf-guard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [2.0.0] — Rebrand to kr.devslab:ssrf-guard
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="[2.0.0] — Rebrand to kr.devslab:ssrf-guard">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#changed_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changed
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#added_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Added
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#migration_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#110-2025-09-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.1.0] — 2025-09-23
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#100-2025-09-23" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        [1.0.0] — 2025-09-23
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/devslab-kr/ssrf-guard/edit/main/docs/changelog.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="changelog">Changelog<a class="headerlink" href="#changelog" title="Permanent link">&para;</a></h1>
+<p>All notable changes to ssrf-guard are recorded here.</p>
+<p>The format follows <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a> and the project adheres to <a href="https://semver.org/">Semantic Versioning</a>.</p>
+<h2 id="unreleased">[Unreleased]<a class="headerlink" href="#unreleased" title="Permanent link">&para;</a></h2>
+<h2 id="310-llm-core-extraction-langchain4j-webclient-dns-gap-graalvm-hints">[3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints<a class="headerlink" href="#310-llm-core-extraction-langchain4j-webclient-dns-gap-graalvm-hints" title="Permanent link">&para;</a></h2>
+<h3 id="added">Added<a class="headerlink" href="#added" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>ssrf-guard-llm</code></strong> — new framework-agnostic core module holding the JSON walking + URL extraction + policy validation that every LLM tool adapter shares. Exposes <code>ToolInputGuard</code> (interface) and <code>JsonToolInputGuard</code> (default impl). Holds the ~200 lines of logic that previously lived inside <code>SsrfGuardedToolCallback</code>.</li>
+<li><strong><code>ssrf-guard-langchain4j</code></strong> — new adapter module wrapping LangChain4j's <code>ToolExecutor</code>. Closes the same LLM-agent SSRF surface as <code>ssrf-guard-springai</code> but for the LangChain4j ecosystem (the other major Java LLM framework). Auto-wrap via <code>BeanPostProcessor</code> for Spring Boot users; <code>SsrfGuardedToolExecutors.wrap(...)</code> helpers for non-Spring / programmatic users.</li>
+<li><strong>GraalVM native-image friendliness.</strong> <code>ssrf-guard-llm</code> registers a <code>RuntimeHintsRegistrar</code> (via <code>META-INF/spring/aot.factories</code>) so Spring Boot's AOT processor learns about the reflective surface this library uses at runtime: the new <code>SsrfBlockPayload</code> record (Jackson-serialised on every block) and the <code>BlockReason</code> enum (Jackson-touched for its <code>label</code>). Adapter modules (<code>-springai</code>, <code>-langchain4j</code>, all Spring autoconfigs) get free AOT coverage from Spring Boot 3 — they only host <code>@Bean</code> factory methods and a <code>BeanPostProcessor</code>, both of which the AOT processor already handles.</li>
+</ul>
+<h3 id="changed">Changed<a class="headerlink" href="#changed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>ssrf-guard-springai</code> refactored to a thin adapter (~30 lines).</strong> Delegates to <code>JsonToolInputGuard</code> from the new <code>-llm</code> module. Public API unchanged — every constructor and method on <code>SsrfGuardedToolCallback</code> keeps the same shape. v3.0.x consumers see no API change; they just pick up <code>ssrf-guard-llm</code> transitively.</li>
+<li><strong>Error-payload shape stabilised.</strong> The JSON object an LLM sees on an SSRF block is now backed by the typed <code>SsrfBlockPayload</code> record (<code>{error, reason, url, message, guidance}</code>). Wire-compatible with v3.0.x — same field names, same values. Replaces the previous <code>Map.of(...)</code> form whose JDK-private <code>ImmutableCollections.MapN</code> backing types AOT couldn't introspect. If you scripted around the wire shape you don't need to change anything; substring assertions in existing tests keep passing.</li>
+</ul>
+<h3 id="fixed">Fixed<a class="headerlink" href="#fixed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>WebClient DNS-time defense gap closed.</strong> v3.0.x's <code>ssrf-guard-webclient</code> only ran the URL-time filter — a host that passed the whitelist could still resolve to a private IP at DNS time (the classic DNS-rebinding-to-metadata attack). The new <code>SsrfGuardReactorAddressResolverGroup</code> plugs into reactor-netty's <code>AddressResolverGroup</code> and filters resolved IPs against the same private-IP ranges the RestClient module checks at the Apache HttpClient <code>DnsResolver</code> step. WebFlux apps now get the same two-layer defense (URL + DNS) the blocking RestClient apps already had. Gated on reactor-netty being on the classpath — non-Netty WebFlux backends (Jetty Reactive, Helidon) still get the URL-time filter and just skip the connector swap.</li>
+</ul>
+<h3 id="migration">Migration<a class="headerlink" href="#migration" title="Permanent link">&para;</a></h3>
+<p>Drop in v3.1.0 — no consumer code changes. The meta <code>kr.devslab:ssrf-guard:3.1.0</code> still transitively pulls in <code>-core</code>, <code>-httpclient5</code>, <code>-restclient</code> like v3.0.x. New modules (<code>-llm</code>, <code>-langchain4j</code>) are opt-in; consumers who don't add their coordinate don't pull the new jars.</p>
+<p>If you previously caught <code>SecurityException</code> you still match <code>SsrfGuardException</code> (it's still a <code>SecurityException</code> subclass). Catch <code>SsrfGuardException</code> to read the structured <code>e.reason()</code>.</p>
+<p>For native-image consumers: add <code>kr.devslab:ssrf-guard-llm:3.1.0</code> (or any module that depends on it transitively) and the AOT processor will pick up the registered hints automatically.</p>
+<h2 id="301-fix-metrics-bean-classpath-gate">[3.0.1] — Fix metrics bean classpath gate<a class="headerlink" href="#301-fix-metrics-bean-classpath-gate" title="Permanent link">&para;</a></h2>
+<h3 id="fixed_1">Fixed<a class="headerlink" href="#fixed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong><code>ClassNotFoundException: io.micrometer.core.instrument.MeterRegistry</code></strong> when consumers don't have <code>micrometer-core</code> on the classpath. Affected every Spring autoconfig module — <code>-restclient</code>, <code>-resttemplate</code> (via <code>-restclient</code>), <code>-webclient</code>, <code>-feign</code>, <code>-springai</code> — because the metrics bean factory method declared <code>ObjectProvider&lt;MeterRegistry&gt;</code> as a parameter, and the JVM resolves parameter types at class load time even when <code>ObjectProvider</code> would otherwise handle the missing bean gracefully.</li>
+<li>The fix moves the Micrometer-backed metrics bean into a static inner <code>@Configuration</code> class gated by <code>@ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")</code> (string form, so Spring's ASM-based condition evaluator inspects the annotation without JVM-loading Micrometer). The outer autoconfig declares a fallback <code>@Bean</code> returning <code>NoOpSsrfGuardMetrics</code> under <code>@ConditionalOnMissingBean(SsrfGuardMetrics.class)</code>.</li>
+</ul>
+<h3 id="migration_1">Migration<a class="headerlink" href="#migration_1" title="Permanent link">&para;</a></h3>
+<p>Drop in v3.0.1 — no consumer code changes. If you previously worked around the v3.0.0 bug by adding <code>io.micrometer:micrometer-core</code> to your build only because of this error (not because you actually wanted metrics), the dep can come out now.</p>
+<h2 id="300-multi-module-llm-agent-ssrf-defense">[3.0.0] — Multi-module + LLM agent SSRF defense<a class="headerlink" href="#300-multi-module-llm-agent-ssrf-defense" title="Permanent link">&para;</a></h2>
+<p>The v2.0.0 starter was a single jar that only worked with Spring's <code>RestClient</code>. v3.0.0 splits the codebase along client boundaries, adds support for every common JVM HTTP stack, and ships a <strong>Spring AI Tool wrapper</strong> that closes the SSRF surface LLM agents have been introducing for the last two years.</p>
+<h3 id="added-new-modules-opt-in">Added — new modules (opt-in)<a class="headerlink" href="#added-new-modules-opt-in" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Use case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ssrf-guard-core</code></td>
+<td>Policy / NetUtil / Micrometer metrics interface — no Spring dependency</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-httpclient5</code></td>
+<td>Apache HttpClient 5 <code>DnsResolver</code> + <code>RedirectStrategy</code> (TOCTOU closure)</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-restclient</code></td>
+<td>Spring 6.1+ <code>RestClient</code> autoconfig (the v2.0.0 surface, now its own module)</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-resttemplate</code></td>
+<td><strong>NEW</strong> — Spring <code>RestTemplate</code> autoconfig for the enterprise/legacy crowd</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-webclient</code></td>
+<td><strong>NEW</strong> — Spring WebFlux <code>WebClient</code> <code>ExchangeFilterFunction</code> + autoconfig</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-feign</code></td>
+<td><strong>NEW</strong> — Spring Cloud OpenFeign <code>RequestInterceptor</code> + autoconfig</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-springai</code></td>
+<td><strong>NEW</strong> — Spring AI <code>ToolCallback</code> wrapper that validates URL-shaped tool arguments before LLM-driven execution. The hot SSRF surface in 2025+</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-jdkhttp</code></td>
+<td><strong>NEW</strong> — <code>java.net.http.HttpClient</code> wrapper (no Spring, JDK 11+)</td>
+</tr>
+<tr>
+<td><code>ssrf-guard-okhttp</code></td>
+<td><strong>NEW</strong> — OkHttp <code>Interceptor</code> + <code>Dns</code> (no Spring)</td>
+</tr>
+<tr>
+<td><code>ssrf-guard</code></td>
+<td>Meta artifact — bundles <code>-core</code> + <code>-httpclient5</code> + <code>-restclient</code> for v2.0.0 back-compat</td>
+</tr>
+</tbody>
+</table>
+<h3 id="added-defense-in-depth-hardening">Added — defense-in-depth hardening<a class="headerlink" href="#added-defense-in-depth-hardening" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>IP-literal host rejection</strong> (<code>ssrf.guard.reject-ip-literal-hosts=true</code> default). Any URL whose host parses as an IP literal in <em>any</em> form — dotted decimal (<code>127.0.0.1</code>), bare decimal (<code>2130706433</code>), hex (<code>0x7f000001</code>), octal (<code>0177.0.0.1</code>), partial (<code>127.1</code>), IPv6 (<code>[::1]</code>) — is rejected at the URL-time check, before DNS. Closes the obfuscated-IP bypass class.</li>
+<li><strong>Userinfo rejection</strong> (<code>ssrf.guard.reject-user-info=true</code> default). URLs of the form <code>https://user:pass@host/...</code> are rejected — known SSRF bypass vector and credential-leak risk.</li>
+<li><strong>IPv4-mapped IPv6 + 6to4 unmapping</strong>. <code>::ffff:10.0.0.5</code> and <code>2002:0a00::</code> (the 6to4 form wrapping 10.0.0.0/8) are now correctly classified as private, not "public IPv6 that happens to embed an internal v4". Java's <code>isLoopbackAddress()</code> misses these.</li>
+</ul>
+<h3 id="added-observability">Added — observability<a class="headerlink" href="#added-observability" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Micrometer metrics</strong>, auto-wired when a <code>MeterRegistry</code> bean is on the classpath:
+  <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ssrf_guard_blocked_total{reason=&quot;blocked_private_ip&quot;, scheme=&quot;http&quot;} 42
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ssrf_guard_allowed_total{scheme=&quot;https&quot;} 13042
+</span></code></pre></div></li>
+<li><strong>Structured WARN logs</strong> on every block: <code>ssrf-guard: &lt;message&gt; (reason=blocked_private_ip, scheme=http, host=169.254.169.254)</code>.</li>
+</ul>
+<h3 id="changed-breaking">Changed — BREAKING<a class="headerlink" href="#changed-breaking" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Package renames.</strong> Types moved out of the catch-all <code>kr.devslab.ssrfguard.security</code> package into their respective modules. The <code>ssrf-guard</code> meta artifact re-exports them, so <code>import kr.devslab.ssrfguard.*</code> consumers may need to update imports:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>v2.0.0</th>
+<th>v3.0.0</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kr.devslab.ssrfguard.autoconfigure.SsrfGuardAutoConfiguration</code></td>
+<td><code>kr.devslab.ssrfguard.restclient.SsrfGuardRestClientAutoConfiguration</code></td>
+</tr>
+<tr>
+<td><code>kr.devslab.ssrfguard.autoconfigure.SsrfGuardProperties</code></td>
+<td><code>kr.devslab.ssrfguard.core.SsrfGuardProperties</code></td>
+</tr>
+<tr>
+<td><code>kr.devslab.ssrfguard.security.SsrfGuardInterceptor</code></td>
+<td><code>kr.devslab.ssrfguard.restclient.SsrfGuardClientHttpRequestInterceptor</code></td>
+</tr>
+<tr>
+<td><code>kr.devslab.ssrfguard.security.SafeDnsResolver</code></td>
+<td><code>kr.devslab.ssrfguard.httpclient5.SafeDnsResolver</code></td>
+</tr>
+<tr>
+<td><code>kr.devslab.ssrfguard.security.SafeRedirectStrategy</code></td>
+<td><code>kr.devslab.ssrfguard.httpclient5.SafeRedirectStrategy</code></td>
+</tr>
+<tr>
+<td><code>kr.devslab.ssrfguard.security.NetUtil</code></td>
+<td><code>kr.devslab.ssrfguard.core.NetUtil</code></td>
+</tr>
+<tr>
+<td>- <strong><code>SecurityException</code> → <code>SsrfGuardException</code>.</strong> All rejection paths now throw <code>SsrfGuardException</code> (still a subclass of <code>SecurityException</code>, so v2.0.0 catch blocks keep working). The exception carries a <code>BlockReason</code> enum tag for metrics / logging.</td>
+<td></td>
+</tr>
+<tr>
+<td>- <strong>New properties.</strong> <code>ssrf.guard.reject-ip-literal-hosts</code> and <code>ssrf.guard.reject-user-info</code> default to <code>true</code> — turning them off restores v2.0.0 behaviour on those two checks.</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="migration_2">Migration<a class="headerlink" href="#migration_2" title="Permanent link">&para;</a></h3>
+<p>For most consumers, <strong>update the version and rebuild</strong> — that's it:</p>
+<div class="language-xml highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>kr.devslab<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>ssrf-guard<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.0.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">&lt;/dependency&gt;</span>
+</span></code></pre></div>
+<p>The <code>ssrf-guard</code> meta artifact transitively pulls in <code>-core</code>, <code>-httpclient5</code>, and <code>-restclient</code>, which together provide the entire v2.0.0 surface.</p>
+<p>If you use a different HTTP client, pick the matching module:</p>
+<div class="language-xml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="cm">&lt;!-- RestTemplate --&gt;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>kr.devslab<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>ssrf-guard-resttemplate<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.0.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nt">&lt;/dependency&gt;</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="cm">&lt;!-- WebClient --&gt;</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>kr.devslab<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>ssrf-guard-webclient<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.0.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="nt">&lt;/dependency&gt;</span>
+</span><span id="__span-2-14"><a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
+</span><span id="__span-2-15"><a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="cm">&lt;!-- Spring AI tool calls --&gt;</span>
+</span><span id="__span-2-16"><a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>kr.devslab<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>ssrf-guard-springai<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-2-19"><a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>3.0.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-2-20"><a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="nt">&lt;/dependency&gt;</span>
+</span></code></pre></div>
+<p>If your code catches <code>SecurityException</code> from outbound calls, it still works — <code>SsrfGuardException extends SecurityException</code>. If you want the structured tag, catch <code>SsrfGuardException</code> and inspect <code>e.reason()</code>.</p>
+<h2 id="200-rebrand-to-krdevslabssrf-guard">[2.0.0] — Rebrand to <code>kr.devslab:ssrf-guard</code><a class="headerlink" href="#200-rebrand-to-krdevslabssrf-guard" title="Permanent link">&para;</a></h2>
+<h3 id="changed_1">Changed<a class="headerlink" href="#changed_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>BREAKING — coordinate changed.</strong> From <code>com.devs.lab:ssrf-guard-spring-boot-starter</code> to <code>kr.devslab:ssrf-guard</code>. The legacy artifact was never published to Maven Central, so v2.0.0 is the first proper Central release.</li>
+<li><strong>BREAKING — package renamed.</strong> <code>devs.lab.ssrf.*</code> → <code>kr.devslab.ssrfguard.*</code>:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>Old</th>
+<th>New</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>devs.lab.ssrf.config.SsrfGuardAutoConfiguration</code></td>
+<td><code>kr.devslab.ssrfguard.autoconfigure.SsrfGuardAutoConfiguration</code></td>
+</tr>
+<tr>
+<td><code>devs.lab.ssrf.security.SsrfGuardProperties</code></td>
+<td><code>kr.devslab.ssrfguard.autoconfigure.SsrfGuardProperties</code></td>
+</tr>
+<tr>
+<td><code>devs.lab.ssrf.security.SsrfGuardInterceptor</code></td>
+<td><code>kr.devslab.ssrfguard.security.SsrfGuardInterceptor</code></td>
+</tr>
+<tr>
+<td><code>devs.lab.ssrf.security.SafeDnsResolver</code></td>
+<td><code>kr.devslab.ssrfguard.security.SafeDnsResolver</code></td>
+</tr>
+<tr>
+<td><code>devs.lab.ssrf.security.SafeRedirectStrategy</code></td>
+<td><code>kr.devslab.ssrfguard.security.SafeRedirectStrategy</code></td>
+</tr>
+<tr>
+<td><code>devs.lab.ssrf.security.NetUtil</code></td>
+<td><code>kr.devslab.ssrfguard.security.NetUtil</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>BREAKING — <code>SsrfGuardApplication</code> removed.</strong> The empty <code>@SpringBootApplication</code> was vestigial scaffolding from the original Spring Initializr template; a starter library has no business carrying a main class.</li>
+<li><strong>Build system: Maven → Gradle 8.10</strong> with Vanniktech maven-publish 0.30.0. Same convention as easy-paging-spring-boot-starter and api-log.</li>
+<li><strong>Release flow: semantic-release → tag-triggered Gradle publish.</strong> A git tag matching <code>v[0-9]+.[0-9]+.[0-9]+</code> runs the release workflow, which builds + signs + uploads to Sonatype Central Portal and creates a GitHub Release in one step.</li>
+</ul>
+<h3 id="added_1">Added<a class="headerlink" href="#added_1" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>CI workflow</strong> (<code>.github/workflows/ci.yml</code>) — runs <code>./gradlew build jacocoTestReport</code> on every push to <code>main</code> and on every PR, uploads coverage to Codecov.</li>
+<li><strong>Docs site</strong> at https://ssrf-guard.devslab.kr/ — installation, quickstart, security model, configuration reference. Built with mkdocs-material + i18n (English + Korean).</li>
+<li><strong>Bilingual README</strong> (<code>README.md</code> / <code>README.ko.md</code>).</li>
+<li><strong>Full test coverage</strong> of every documented defense:</li>
+<li><code>NetUtilTest</code> — whitelist matching (exact + suffix), IDN normalisation, private-IP classification across IPv4 (loopback, RFC-1918, link-local incl. AWS metadata, CGNAT, benchmark, broadcast) and IPv6 (ULA, link-local).</li>
+<li><code>SafeDnsResolverTest</code> — whitelist gate + private-IP filter, including the "filtered everything" path.</li>
+<li><code>SsrfGuardInterceptorTest</code> — scheme/host/port accept/reject matrix, suffix label-boundary lookalike (the classic <code>badexample.com</code> bypass).</li>
+<li><code>SsrfGuardAutoConfigurationTest</code> — every public bean of the auto-config is registered when enabled, and none are when <code>ssrf.guard.enabled=false</code>.</li>
+<li><code>SsrfGuardIntegrationTest</code> — real HTTP through <code>MockWebServer</code>, end-to-end through the four-layer defense.</li>
+</ul>
+<h3 id="migration_3">Migration<a class="headerlink" href="#migration_3" title="Permanent link">&para;</a></h3>
+<p>Update your dependency coordinate and any direct imports:</p>
+<div class="language-xml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="cm">&lt;!-- v1.x (never on Maven Central) --&gt;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>com.devs.lab<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>ssrf-guard-spring-boot-starter<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>1.1.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">&lt;/dependency&gt;</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="cm">&lt;!-- v2.0.0 --&gt;</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nt">&lt;dependency&gt;</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">&lt;groupId&gt;</span>kr.devslab<span class="nt">&lt;/groupId&gt;</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>ssrf-guard<span class="nt">&lt;/artifactId&gt;</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">&lt;version&gt;</span>2.0.0<span class="nt">&lt;/version&gt;</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="nt">&lt;/dependency&gt;</span>
+</span></code></pre></div>
+<p><code>application.yml</code> keys are unchanged — <code>ssrf.guard.*</code> works identically.</p>
+<p>Direct imports of the security types? Replace <code>devs.lab.ssrf</code> with <code>kr.devslab.ssrfguard</code> and split between <code>kr.devslab.ssrfguard.autoconfigure</code> (properties + auto-config) and <code>kr.devslab.ssrfguard.security</code> (interceptor + resolver + redirect + NetUtil).</p>
+<h2 id="110-2025-09-23">[1.1.0] — 2025-09-23<a class="headerlink" href="#110-2025-09-23" title="Permanent link">&para;</a></h2>
+<p>semantic-release rollup of pre-v2 work. Tagged but <strong>never published to Maven Central</strong>.</p>
+<ul>
+<li>README + releaser templates touched up</li>
+</ul>
+<h2 id="100-2025-09-23">[1.0.0] — 2025-09-23<a class="headerlink" href="#100-2025-09-23" title="Permanent link">&para;</a></h2>
+<p>Initial public release. Tagged but <strong>never published to Maven Central</strong>.</p>
+<ul>
+<li>First cut of the SSRF starter under <code>com.devs.lab:ssrf-guard-spring-boot-starter</code></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright © 2026 Devslab
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/devslab-kr/ssrf-guard" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://devslab.kr" target="_blank" rel="noopener" title="devslab.kr" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M351.9 280H161c2.9 64.5 17.2 123.9 37.5 167.4 11.4 24.5 23.7 41.8 35.1 52.4 11.2 10.5 18.9 12.2 22.9 12.2s11.7-1.7 22.9-12.2c11.4-10.6 23.7-28 35.1-52.4 20.3-43.5 34.6-102.9 37.5-167.4zm-191-48h190.9c-2.8-64.5-17.1-123.9-37.4-167.4-11.4-24.4-23.7-41.8-35.1-52.4C268.1 1.7 260.4 0 256.4 0s-11.7 1.7-22.9 12.2c-11.4 10.6-23.7 28-35.1 52.4-20.3 43.5-34.6 102.9-37.5 167.4m-48 0c3.5-85.6 25.6-165.1 57.9-217.3C78.7 47.3 10.9 131.2 1.5 232zM1.5 280c9.4 100.8 77.2 184.7 169.3 217.3-32.3-52.2-54.4-131.7-57.9-217.3zm398.4 0c-3.5 85.6-25.6 165.1-57.9 217.3 92.1-32.7 159.9-116.5 169.3-217.3zm111.4-48C501.9 131.2 434.1 47.3 342 14.7c32.3 52.2 54.4 131.7 57.9 217.3z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "navigation.tracking", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

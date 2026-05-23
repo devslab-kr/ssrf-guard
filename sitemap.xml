@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/changelog/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/changelog/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/changelog/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/contributing/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/contributing/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/contributing/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/getting-started/installation/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/getting-started/installation/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/getting-started/installation/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/getting-started/quickstart/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/getting-started/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/getting-started/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/guides/configuration/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/guides/configuration/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/guides/configuration/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/guides/performance/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/guides/performance/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/guides/performance/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/guides/security-model/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/guides/security-model/"/>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/guides/security-model/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/changelog/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/changelog/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/changelog/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/contributing/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/contributing/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/contributing/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/getting-started/installation/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/getting-started/installation/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/getting-started/installation/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/getting-started/quickstart/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/getting-started/quickstart/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/getting-started/quickstart/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/guides/configuration/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/guides/configuration/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/guides/configuration/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/guides/performance/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/guides/performance/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/guides/performance/"/>
+    </url>
+    <url>
+        <loc>https://ssrf-guard.devslab.kr/ko/guides/security-model/</loc>
+        <lastmod>2026-05-23</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="ko" href="https://ssrf-guard.devslab.kr/ko/guides/security-model/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://ssrf-guard.devslab.kr/guides/security-model/"/>
+    </url>
+</urlset>
