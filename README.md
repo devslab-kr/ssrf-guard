@@ -87,17 +87,17 @@ Auto-config picks it up — any `@Bean ToolCallback` gets wrapped via a `BeanPos
 <dependency>
     <groupId>kr.devslab</groupId>
     <artifactId>ssrf-guard</artifactId>
-    <version>3.0.0</version>
+    <version>3.1.0</version>
 </dependency>
 ```
 
 ### Gradle (Kotlin DSL)
 
 ```kotlin
-implementation("kr.devslab:ssrf-guard:3.0.0")
+implementation("kr.devslab:ssrf-guard:3.1.0")
 ```
 
-> **Upgrading from v2.0.0?** The meta `kr.devslab:ssrf-guard:3.0.0` keeps the v2.0.0 API working — pulls in `-core`, `-httpclient5`, `-restclient` transitively. Direct imports of `kr.devslab.ssrfguard.security.*` need updates — see the [v3.0.0 changelog](CHANGELOG.md#300--multi-module--llm-agent-ssrf-defense) for the package-rename mapping.
+> **Upgrading from v2.0.0?** The meta `kr.devslab:ssrf-guard:3.1.0` keeps the v2.0.0 API working — pulls in `-core`, `-httpclient5`, `-restclient` transitively. Direct imports of `kr.devslab.ssrfguard.security.*` need updates — see the [v3.0.0 changelog](CHANGELOG.md#300--multi-module--llm-agent-ssrf-defense) for the package-rename mapping.
 
 ## Configuration
 
