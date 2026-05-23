@@ -1,8 +1,6 @@
 package kr.devslab.ssrfguard.springai;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import kr.devslab.ssrfguard.core.HostPolicy;
-import kr.devslab.ssrfguard.core.MicrometerSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.NoOpSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardProperties;
@@ -16,6 +14,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 /**
  * Auto-configuration that wires the SSRF defenses into Spring AI tool calls.
@@ -34,6 +33,11 @@ import org.springframework.context.annotation.Bean;
  * bean Spring registers, so a consumer's hand-rolled {@code @Bean ToolCallback}
  * gets the URL policy applied without any wiring code. Manual wraps via
  * {@link SsrfGuardedToolCallbacks#wrap} are idempotent so users can do both.
+ *
+ * <p>Metrics: Micrometer-backed when {@code micrometer-core} is on the
+ * classpath ({@link MetricsConfiguration}); no-op otherwise. The outer
+ * class never references Micrometer types, so consumers without
+ * Micrometer boot cleanly.
  */
 @AutoConfiguration
 @ConditionalOnClass(ToolCallback.class)
@@ -42,10 +46,9 @@ import org.springframework.context.annotation.Bean;
 public class SsrfGuardSpringAiAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
-    SsrfGuardMetrics ssrfGuardMetricsSpringAi(ObjectProvider<MeterRegistry> meterRegistry) {
-        MeterRegistry reg = meterRegistry.getIfAvailable();
-        return reg == null ? NoOpSsrfGuardMetrics.INSTANCE : new MicrometerSsrfGuardMetrics(reg);
+    @ConditionalOnMissingBean(SsrfGuardMetrics.class)
+    SsrfGuardMetrics ssrfGuardMetricsSpringAi() {
+        return NoOpSsrfGuardMetrics.INSTANCE;
     }
 
     @Bean
@@ -83,5 +86,20 @@ public class SsrfGuardSpringAiAutoConfiguration {
                 return bean;
             }
         };
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")
+    static class MetricsConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(SsrfGuardMetrics.class)
+        SsrfGuardMetrics micrometerSsrfGuardMetricsSpringAi(
+                ObjectProvider<io.micrometer.core.instrument.MeterRegistry> meterRegistry) {
+            var reg = meterRegistry.getIfAvailable();
+            return reg == null
+                    ? NoOpSsrfGuardMetrics.INSTANCE
+                    : new kr.devslab.ssrfguard.core.MicrometerSsrfGuardMetrics(reg);
+        }
     }
 }

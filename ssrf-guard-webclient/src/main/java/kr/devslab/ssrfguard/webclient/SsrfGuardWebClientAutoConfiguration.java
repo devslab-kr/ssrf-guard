@@ -1,8 +1,6 @@
 package kr.devslab.ssrfguard.webclient;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import kr.devslab.ssrfguard.core.HostPolicy;
-import kr.devslab.ssrfguard.core.MicrometerSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.NoOpSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardProperties;
@@ -15,6 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.reactive.function.client.WebClientCustomizer;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
 /**
@@ -27,9 +26,10 @@ import org.springframework.web.reactive.function.client.WebClient;
  *   <li>{@code ssrf.guard.enabled=true} (default).</li>
  * </ul>
  *
- * <p>The customizer's effect: every {@code WebClient} the consumer builds
- * via {@code WebClient.Builder} inherits the SSRF policy through an
- * {@link SsrfGuardExchangeFilterFunction}.
+ * <p>Metrics: Micrometer-backed when {@code micrometer-core} is on the
+ * classpath ({@link MetricsConfiguration} below); no-op otherwise. The
+ * outer class never references Micrometer types, so a consumer without
+ * Micrometer boots cleanly — see the v3.0.1 changelog entry.
  */
 @AutoConfiguration
 @ConditionalOnClass(WebClient.class)
@@ -38,10 +38,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class SsrfGuardWebClientAutoConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
-    SsrfGuardMetrics ssrfGuardMetricsWebClient(ObjectProvider<MeterRegistry> meterRegistry) {
-        MeterRegistry reg = meterRegistry.getIfAvailable();
-        return reg == null ? NoOpSsrfGuardMetrics.INSTANCE : new MicrometerSsrfGuardMetrics(reg);
+    @ConditionalOnMissingBean(SsrfGuardMetrics.class)
+    SsrfGuardMetrics ssrfGuardMetricsWebClient() {
+        return NoOpSsrfGuardMetrics.INSTANCE;
     }
 
     @Bean
@@ -71,5 +70,20 @@ public class SsrfGuardWebClientAutoConfiguration {
     @ConditionalOnMissingBean(name = "ssrfWebClientCustomizer")
     WebClientCustomizer ssrfWebClientCustomizer(SsrfGuardExchangeFilterFunction filter) {
         return builder -> builder.filter(filter);
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = "io.micrometer.core.instrument.MeterRegistry")
+    static class MetricsConfiguration {
+
+        @Bean
+        @ConditionalOnMissingBean(SsrfGuardMetrics.class)
+        SsrfGuardMetrics micrometerSsrfGuardMetricsWebClient(
+                ObjectProvider<io.micrometer.core.instrument.MeterRegistry> meterRegistry) {
+            var reg = meterRegistry.getIfAvailable();
+            return reg == null
+                    ? NoOpSsrfGuardMetrics.INSTANCE
+                    : new kr.devslab.ssrfguard.core.MicrometerSsrfGuardMetrics(reg);
+        }
     }
 }
