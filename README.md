@@ -29,7 +29,7 @@ Standalone Spring Boot projects that exercise every module documented below — 
 
 Full index at [github.com/devslab-kr/devslab-examples](https://github.com/devslab-kr/devslab-examples).
 
-## Module matrix (v3.0.0)
+## Module matrix
 
 Pick the module matching your HTTP client. The core (`ssrf-guard-core`) follows transitively.
 
@@ -38,9 +38,11 @@ Pick the module matching your HTTP client. The core (`ssrf-guard-core`) follows 
 | **`ssrf-guard`** | Meta artifact — RestClient + HttpClient5 (v2.0.0 back-compat) | ✅ |
 | `ssrf-guard-restclient` | Spring 6.1+ `RestClient` | ✅ |
 | `ssrf-guard-resttemplate` | Spring `RestTemplate` | ✅ |
-| `ssrf-guard-webclient` | Spring WebFlux `WebClient` | ✅ |
+| `ssrf-guard-webclient` | Spring WebFlux `WebClient` — URL-time filter + reactor-netty DNS-time IP filter (v3.1+) | ✅ |
 | `ssrf-guard-feign` | Spring Cloud OpenFeign | ✅ |
-| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` URL validation — closes the LLM-agent SSRF surface | ✅ |
+| `ssrf-guard-llm` 🧩 | Framework-agnostic JSON tool-input validator (v3.1+) — reused by the LLM adapters | — |
+| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` URL validation — thin adapter over `-llm` | ✅ |
+| **`ssrf-guard-langchain4j`** ⭐ | LangChain4j `ToolExecutor` URL validation — same defense for the other Java LLM framework (v3.1+) | ✅ |
 | `ssrf-guard-httpclient5` | Apache HttpClient 5 directly | — |
 | `ssrf-guard-jdkhttp` | `java.net.http.HttpClient` | — |
 | `ssrf-guard-okhttp` | OkHttp | — |

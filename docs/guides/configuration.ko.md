@@ -92,3 +92,24 @@ ssrf:
 ```
 
 이 정도 화이트리스트면 partner-integration이 많은 거의 모든 서비스를 SSRF에서 보호.
+
+## LLM 어댑터 properties (v3.1+)
+
+LLM 툴 빈 자동 wrap을 제어하는 두 토글. 둘 다 기본 `true` — 자체 코드에서 (`SsrfGuardedToolCallbacks.wrap(...)` / `SsrfGuardedToolExecutors.wrap(...)`) 선별적으로 wrap하고 싶으면 `false`로 끔.
+
+| 키 | 기본값 | 효과 |
+|---|---|---|
+| `ssrf.guard.springai.wrap-tool-callbacks` | `true` | Spring AI 모든 `ToolCallback` 빈 자동 wrap. `ssrf-guard-springai` classpath 필요. |
+| `ssrf.guard.langchain4j.wrap-tool-executors` | `true` | LangChain4j 모든 `ToolExecutor` 빈 자동 wrap. `ssrf-guard-langchain4j` classpath 필요. |
+
+```yaml
+ssrf:
+  guard:
+    enabled: true
+    exact-hosts:
+      - api.partner.com
+    springai:
+      wrap-tool-callbacks: true     # 기본
+    langchain4j:
+      wrap-tool-executors: true     # 기본
+```

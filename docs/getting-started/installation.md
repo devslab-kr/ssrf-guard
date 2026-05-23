@@ -69,7 +69,38 @@ ssrf-guard v3.0.0 is split along HTTP-client boundaries — pick the module(s) m
     </dependency>
     ```
 
-    Wraps every `ToolCallback` bean with URL-argument validation. The defining new SSRF surface — LLM agents that take a URL as a parameter and fetch it.
+    Wraps every `ToolCallback` bean with URL-argument validation. The defining new SSRF surface — LLM agents that take a URL as a parameter and fetch it. v3.1+ delegates to `ssrf-guard-llm` (the framework-agnostic core); same public API.
+
+=== "LangChain4j tool execution"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-langchain4j</artifactId>
+        <version>3.1.0</version>
+    </dependency>
+    ```
+
+    Same threat model as the Spring AI tab — different framework. Wraps every `ToolExecutor` bean. Useful when your LangChain4j tools are Spring beans (auto-wrapped by `BeanPostProcessor`); for programmatic / non-Spring use, the `SsrfGuardedToolExecutors.wrap(...)` helpers cover the `AiServices.builder(...).tools(Map<ToolSpecification, ToolExecutor>)` shape.
+
+=== "Custom tool dispatcher (no framework)"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-llm</artifactId>
+        <version>3.1.0</version>
+    </dependency>
+    ```
+
+    The framework-agnostic core. Use directly when you've built your own tool router (MCP server, internal RPC dispatcher, custom agent loop):
+
+    ```java
+    JsonToolInputGuard guard = new JsonToolInputGuard(urlPolicy);
+    String violation = guard.checkOrFormatError(rawJsonInput);
+    if (violation != null) return violation;   // structured JSON for the LLM
+    // ... run the real tool
+    ```
 
 === "Plain JDK HttpClient (no Spring)"
 

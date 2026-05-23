@@ -92,3 +92,24 @@ ssrf:
 ```
 
 A whitelist this size will keep almost any partner-integration-heavy service safe from SSRF.
+
+## LLM-adapter properties (v3.1+)
+
+Two additional toggles control automatic wrapping of LLM tool beans. Both default to `true` — set to `false` to wrap selectively from your own code (via `SsrfGuardedToolCallbacks.wrap(...)` or `SsrfGuardedToolExecutors.wrap(...)`) without the `BeanPostProcessor` running.
+
+| Key | Default | Effect |
+|---|---|---|
+| `ssrf.guard.springai.wrap-tool-callbacks` | `true` | Wraps every Spring AI `ToolCallback` bean. Requires `ssrf-guard-springai` on the classpath. |
+| `ssrf.guard.langchain4j.wrap-tool-executors` | `true` | Wraps every LangChain4j `ToolExecutor` bean. Requires `ssrf-guard-langchain4j` on the classpath. |
+
+```yaml
+ssrf:
+  guard:
+    enabled: true
+    exact-hosts:
+      - api.partner.com
+    springai:
+      wrap-tool-callbacks: true     # default
+    langchain4j:
+      wrap-tool-executors: true     # default
+```

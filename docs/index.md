@@ -17,9 +17,11 @@ Pick the module(s) matching your HTTP client. The core is pulled in transitively
 | **`ssrf-guard`** | Meta artifact — RestClient + HttpClient5 (v2.0.0 back-compat) | Yes |
 | `ssrf-guard-restclient` | Spring 6.1+ `RestClient` | Yes |
 | `ssrf-guard-resttemplate` | Spring `RestTemplate` (enterprise / legacy) | Yes |
-| `ssrf-guard-webclient` | Spring WebFlux `WebClient` | Yes (WebFlux) |
+| `ssrf-guard-webclient` | Spring WebFlux `WebClient` — URL-time filter **and** reactor-netty DNS-time IP filter (v3.1+) | Yes (WebFlux) |
 | `ssrf-guard-feign` | Spring Cloud OpenFeign | Yes (Cloud) |
-| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` — closes the LLM-agent SSRF surface | Yes (AI) |
+| `ssrf-guard-llm` 🧩 | Framework-agnostic JSON tool-input validator (v3.1+). Used by the springai / langchain4j adapters; usable directly from a custom dispatcher. | No |
+| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` — closes the LLM-agent SSRF surface (thin adapter over `-llm`) | Yes (AI) |
+| **`ssrf-guard-langchain4j`** ⭐ | LangChain4j `ToolExecutor` — same defense for the other Java LLM framework (v3.1+, thin adapter over `-llm`) | Yes |
 | `ssrf-guard-httpclient5` | Apache HttpClient 5 directly | No |
 | `ssrf-guard-jdkhttp` | `java.net.http.HttpClient` (JDK 11+) | No |
 | `ssrf-guard-okhttp` | OkHttp | No |
