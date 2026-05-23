@@ -1,19 +1,40 @@
-# [1.1.0](https://github.com/jlc488/ssrf-guard/compare/v1.0.0...v1.1.0) (2025-09-23)
+# Changelog
 
+The full changelog with anchored links is published at
+**<https://ssrf-guard.devslab.kr/changelog/>** ([한국어](https://ssrf-guard.devslab.kr/ko/changelog/)).
 
-### Features
+The source of truth for the entries below is [docs/changelog.md](docs/changelog.md) — please update there.
 
-* README.md 수정 및 releasers 템플릿 추가 ([4275d87](https://github.com/jlc488/ssrf-guard/commit/4275d87b606916d0293bb90129c54e9757288be5))
+## [Unreleased]
 
-# 1.0.0 (2025-09-23)
+## [2.0.0] — Rebrand to `kr.devslab:ssrf-guard`
 
+### Changed
 
-### Bug Fixes
+- **BREAKING — coordinate changed.** From `com.devs.lab:ssrf-guard-spring-boot-starter` to `kr.devslab:ssrf-guard`. The legacy artifact was never published to Maven Central, so v2.0.0 is the first proper Central release.
+- **BREAKING — package renamed.** `devs.lab.ssrf.*` → `kr.devslab.ssrfguard.*`. Full mapping in [docs/changelog.md](docs/changelog.md#200--rebrand-to-krdevslabssrf-guard).
+- **BREAKING — `SsrfGuardApplication` (the empty `@SpringBootApplication`) removed.** Vestigial scaffolding from the original Spring Initializr template.
+- **Build system: Maven → Gradle 8.10** with Vanniktech maven-publish 0.30.0.
+- **Release flow: semantic-release → tag-triggered Gradle publish.** A git tag matching `v[0-9]+.[0-9]+.[0-9]+` runs the release workflow.
 
-* GitHub Actions semantic-release 플러그인 버전 수정 ([8f6c29d](https://github.com/jlc488/ssrf-guard/commit/8f6c29d1fd2f4dc74cfe1758098c0f5032b137b9))
-* GitHub Actions 권한 설정 추가 ([dae1481](https://github.com/jlc488/ssrf-guard/commit/dae14819aaccf41c160bbf20a9a0a4ea4ce28c24))
+### Added
 
+- CI workflow (`build` + JaCoCo + Codecov).
+- Docs site at https://ssrf-guard.devslab.kr/ (en + ko, mkdocs-material + i18n).
+- Bilingual README (`README.md` / `README.ko.md`).
+- Full test coverage replacing the placeholder `contextLoads()` — `NetUtilTest`, `SafeDnsResolverTest`, `SsrfGuardInterceptorTest`, `SsrfGuardAutoConfigurationTest`, `SsrfGuardIntegrationTest`.
 
-### Features
+Full migration notes in [docs/changelog.md](docs/changelog.md#200--rebrand-to-krdevslabssrf-guard).
 
-* ssrf 스프링부트 스타터 추가 ([6c9f289](https://github.com/jlc488/ssrf-guard/commit/6c9f28956030c40f3b65182f09a63040fbb8b65b))
+## [1.1.0] — 2025-09-23
+
+semantic-release rollup. Tagged but **never published to Maven Central**.
+
+## [1.0.0] — 2025-09-23
+
+Initial public release. Tagged but **never published to Maven Central**.
+
+[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v2.0.0
+[1.1.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v1.1.0
+[1.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v1.0.0

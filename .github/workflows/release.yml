@@ -2,57 +2,59 @@ name: Release
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
 
 permissions:
   contents: write
-  issues: write
-  pull-requests: write
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'temurin'
-        
-    - name: Cache Maven packages
-      uses: actions/cache@v4
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        
-    - name: Build and Test
-      run: mvn clean test
-      
-    - name: Semantic Release
-      uses: cycjimmy/semantic-release-action@v4
-      with:
-        semantic_version: 22
-        extra_plugins: |
-          @semantic-release/changelog@6
-          @semantic-release/git@10
-          @semantic-release/exec@6
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: Build JAR
-      if: success()
-      run: mvn clean package -DskipTests
-      
-    - name: Upload Release Asset
-      if: success()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ssrf-guard-spring-boot-starter
-        path: target/ssrf-guard-spring-boot-starter-*.jar
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Derive version from tag
+        id: ver
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and test
+        run: ./gradlew build --no-configuration-cache --stacktrace -PVERSION=${{ steps.ver.outputs.version }}
+
+      - name: Publish to Maven Central
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.SIGNING_KEY }}
+          # See api-log starter — SIGNING_KEY_ID is 16-char long form but
+          # Gradle's PgpKeyId only accepts 8-char short form. Trim last 8.
+          SIGNING_KEY_ID_RAW: ${{ secrets.SIGNING_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.SIGNING_KEY_PASSWORD }}
+        run: |
+          export ORG_GRADLE_PROJECT_signingInMemoryKeyId="${SIGNING_KEY_ID_RAW: -8}"
+          ./gradlew publishAndReleaseToMavenCentral \
+            --no-configuration-cache \
+            --stacktrace \
+            -PVERSION=${{ steps.ver.outputs.version }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          name: ${{ github.ref_name }}
+          fail_on_unmatched_files: false
+          files: |
+            build/libs/*.jar
+            build/libs/*.asc
