@@ -30,36 +30,6 @@ jobs:
         id: ver
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
 
-      # Diag: confirm the org-level Maven Central secrets actually reach this
-      # repo. api-log's SIGNING_KEY journey taught us to verify shape first
-      # (length, BEGIN/END PGP markers, multi-line preservation) rather than
-      # re-paste blindly. Removed once publish is stable.
-      - name: Diag — secret shape
-        env:
-          K: ${{ secrets.SIGNING_KEY }}
-          ID: ${{ secrets.SIGNING_KEY_ID }}
-          P: ${{ secrets.SIGNING_KEY_PASSWORD }}
-          U: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
-          PW: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-        run: |
-          echo "SIGNING_KEY length=${#K}"
-          echo "SIGNING_KEY_ID length=${#ID}"
-          echo "SIGNING_KEY_PASSWORD length=${#P}"
-          echo "MAVEN_CENTRAL_USERNAME length=${#U}"
-          echo "MAVEN_CENTRAL_PASSWORD length=${#PW}"
-          if [[ "$K" == *"BEGIN PGP PRIVATE KEY"* ]]; then
-            echo "SIGNING_KEY has BEGIN PGP header: YES"
-          else
-            echo "SIGNING_KEY has BEGIN PGP header: NO"
-          fi
-          if [[ "$K" == *"END PGP PRIVATE KEY"* ]]; then
-            echo "SIGNING_KEY has END PGP footer: YES"
-          else
-            echo "SIGNING_KEY has END PGP footer: NO"
-          fi
-          line_count=$(printf '%s' "$K" | wc -l)
-          echo "SIGNING_KEY newline count=$line_count"
-
       - name: Build and test
         run: ./gradlew build --no-configuration-cache --stacktrace -PVERSION=${{ steps.ver.outputs.version }}
 
