@@ -6,28 +6,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-Tracking v3.1.0 work. Released items will move into their own section below when the tag lands.
+## [3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints
 
 ### Added
 
-- **`ssrf-guard-llm`** — new framework-agnostic core module holding the JSON walking + URL extraction + policy validation that every LLM tool adapter shares. Exposes `ToolInputGuard` (interface) and `JsonToolInputGuard` (default impl). Replaces ~200 lines of logic that previously lived inside `SsrfGuardedToolCallback`.
+- **`ssrf-guard-llm`** — new framework-agnostic core module holding the JSON walking + URL extraction + policy validation that every LLM tool adapter shares. Exposes `ToolInputGuard` (interface) and `JsonToolInputGuard` (default impl). Holds the ~200 lines of logic that previously lived inside `SsrfGuardedToolCallback`.
 - **`ssrf-guard-langchain4j`** — new adapter module wrapping LangChain4j's `ToolExecutor`. Closes the same LLM-agent SSRF surface as `ssrf-guard-springai` but for the LangChain4j ecosystem (the other major Java LLM framework). Auto-wrap via `BeanPostProcessor` for Spring Boot users; `SsrfGuardedToolExecutors.wrap(...)` helpers for non-Spring / programmatic users.
+- **GraalVM native-image friendliness.** `ssrf-guard-llm` registers a `RuntimeHintsRegistrar` (via `META-INF/spring/aot.factories`) so Spring Boot's AOT processor learns about the reflective surface this library uses at runtime: the new `SsrfBlockPayload` record (Jackson-serialised on every block) and the `BlockReason` enum (Jackson-touched for its `label`). Adapter modules (`-springai`, `-langchain4j`, all Spring autoconfigs) get free AOT coverage from Spring Boot 3 — they only host `@Bean` factory methods and a `BeanPostProcessor`, both of which the AOT processor already handles.
 
 ### Changed
 
 - **`ssrf-guard-springai` refactored to a thin adapter (~30 lines).** Delegates to `JsonToolInputGuard` from the new `-llm` module. Public API unchanged — every constructor and method on `SsrfGuardedToolCallback` keeps the same shape. v3.0.x consumers see no API change; they just pick up `ssrf-guard-llm` transitively.
-
-### Added (continued)
-
-- **GraalVM native-image friendliness.** `ssrf-guard-llm` registers a `RuntimeHintsRegistrar` (via `META-INF/spring/aot.factories`) so Spring Boot's AOT processor learns about the reflective surface this library uses at runtime: the new `SsrfBlockPayload` record (Jackson-serialised on every block) and the `BlockReason` enum (also Jackson-touched for its `label`). Replaces the previous `Map.of(...)` payload form, which used JVM-private `ImmutableCollections.MapN` types that AOT couldn't introspect. Adapter modules (`-springai`, `-langchain4j`, all Spring autoconfigs) get free AOT coverage from Spring Boot 3 — they only host `@Bean` factory methods and a `BeanPostProcessor`, both of which the AOT processor already handles.
-
-### Changed (continued)
-
-- **Error-payload shape stabilised.** The JSON object an LLM sees on an SSRF block is now backed by the typed `SsrfBlockPayload` record (`{error, reason, url, message, guidance}`). Wire-compatible with v3.0.x — same field names, same values. Existing tests assert on substring matches against those names and keep passing; if you scripted around the wire shape you don't need to change anything.
+- **Error-payload shape stabilised.** The JSON object an LLM sees on an SSRF block is now backed by the typed `SsrfBlockPayload` record (`{error, reason, url, message, guidance}`). Wire-compatible with v3.0.x — same field names, same values. Replaces the previous `Map.of(...)` form whose JDK-private `ImmutableCollections.MapN` backing types AOT couldn't introspect. If you scripted around the wire shape you don't need to change anything; substring assertions in existing tests keep passing.
 
 ### Fixed
 
 - **WebClient DNS-time defense gap closed.** v3.0.x's `ssrf-guard-webclient` only ran the URL-time filter — a host that passed the whitelist could still resolve to a private IP at DNS time (the classic DNS-rebinding-to-metadata attack). The new `SsrfGuardReactorAddressResolverGroup` plugs into reactor-netty's `AddressResolverGroup` and filters resolved IPs against the same private-IP ranges the RestClient module checks at the Apache HttpClient `DnsResolver` step. WebFlux apps now get the same two-layer defense (URL + DNS) the blocking RestClient apps already had. Gated on reactor-netty being on the classpath — non-Netty WebFlux backends (Jetty Reactive, Helidon) still get the URL-time filter and just skip the connector swap.
+
+### Migration
+
+Drop in v3.1.0 — no consumer code changes. The meta `kr.devslab:ssrf-guard:3.1.0` still transitively pulls in `-core`, `-httpclient5`, `-restclient` like v3.0.x. New modules (`-llm`, `-langchain4j`) are opt-in; consumers who don't add their coordinate don't pull the new jars.
+
+If you previously caught `SecurityException` you still match `SsrfGuardException` (it's still a `SecurityException` subclass). Catch `SsrfGuardException` to read the structured `e.reason()`.
+
+For native-image consumers: add `kr.devslab:ssrf-guard-llm:3.1.0` (or any module that depends on it transitively) and the AOT processor will pick up the registered hints automatically.
 
 ## [3.0.1] — Fix metrics bean classpath gate
 

@@ -6,28 +6,30 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
-v3.1.0 작업 추적. 릴리즈된 항목은 태그 시 별도 섹션으로 이동.
+## [3.1.0] — LLM 코어 추출, LangChain4j, WebClient DNS 공백 메움, GraalVM hints
 
 ### Added
 
-- **`ssrf-guard-llm`** — 신규. 모든 LLM 툴 어댑터가 공유하는 JSON 트리 walk + URL 추출 + 정책 검증을 담는 framework-agnostic 코어 모듈. `ToolInputGuard` (인터페이스)와 `JsonToolInputGuard` (기본 구현) 노출. 이전에 `SsrfGuardedToolCallback` 내부에 있던 ~200줄 로직을 이쪽으로 이동.
+- **`ssrf-guard-llm`** — 신규. 모든 LLM 툴 어댑터가 공유하는 JSON 트리 walk + URL 추출 + 정책 검증을 담는 framework-agnostic 코어 모듈. `ToolInputGuard` (인터페이스)와 `JsonToolInputGuard` (기본 구현) 노출. 이전에 `SsrfGuardedToolCallback` 내부에 있던 ~200줄 로직을 이쪽으로 통합.
 - **`ssrf-guard-langchain4j`** — 신규. LangChain4j의 `ToolExecutor`를 wrap하는 어댑터 모듈. `ssrf-guard-springai`와 동일한 LLM 에이전트 SSRF 표면을 LangChain4j 생태계 (Java LLM 양대 프레임워크 중 다른 하나) 대응. Spring Boot 사용자는 `BeanPostProcessor`로 자동 wrap; 비-Spring/프로그래매틱 사용자용 `SsrfGuardedToolExecutors.wrap(...)` 헬퍼 제공.
+- **GraalVM native-image 친화성.** `ssrf-guard-llm`이 `RuntimeHintsRegistrar`를 등록 (`META-INF/spring/aot.factories` 통해) — Spring Boot AOT 프로세서가 런타임 reflection surface (매 차단마다 Jackson이 직렬화하는 `SsrfBlockPayload` record, Jackson에 의해 `label`이 읽히는 `BlockReason` enum)를 인식. 어댑터 모듈 (`-springai`, `-langchain4j`, 모든 Spring 자동설정)은 Spring Boot 3 AOT가 무료로 처리 — `@Bean` 팩토리 메서드와 `BeanPostProcessor`만 호스팅하므로.
 
 ### Changed
 
 - **`ssrf-guard-springai`가 thin adapter (~30줄)로 리팩토링.** 새 `-llm` 모듈의 `JsonToolInputGuard`에 위임. Public API 변경 없음 — `SsrfGuardedToolCallback`의 모든 생성자/메서드 시그니처 유지. v3.0.x 소비자는 API 변경 못 느낌 — 단지 `ssrf-guard-llm`을 transitive로 받게 됨.
-
-### Added (이어서)
-
-- **GraalVM native-image 친화성.** `ssrf-guard-llm`이 `RuntimeHintsRegistrar`를 등록 (`META-INF/spring/aot.factories` 통해) — Spring Boot AOT 프로세서가 런타임 reflection surface (매 차단마다 Jackson이 직렬화하는 `SsrfBlockPayload` record, 그리고 `label`이 Jackson에 의해 읽히는 `BlockReason` enum)를 인식. 이전 `Map.of(...)` payload 형태가 JVM-내부 `ImmutableCollections.MapN` 타입을 써서 AOT가 introspect 못 했던 문제 해결. 어댑터 모듈 (`-springai`, `-langchain4j`, 모든 Spring 자동설정)은 Spring Boot 3 AOT가 무료로 처리 — `@Bean` 팩토리 메서드와 `BeanPostProcessor`만 호스팅하므로.
-
-### Changed (이어서)
-
-- **에러 payload 형태 안정화.** SSRF 차단 시 LLM이 보는 JSON 객체가 이제 typed `SsrfBlockPayload` record (`{error, reason, url, message, guidance}`) 기반. v3.0.x와 wire 호환 — 동일 필드명, 동일 값. 기존 테스트가 substring 매치로 검증하고 그대로 통과; wire shape에 의존한 스크립트도 변경 불필요.
+- **에러 payload 형태 안정화.** SSRF 차단 시 LLM이 보는 JSON 객체가 이제 typed `SsrfBlockPayload` record (`{error, reason, url, message, guidance}`) 기반. v3.0.x와 wire 호환 — 동일 필드명, 동일 값. 이전 `Map.of(...)` 형태의 JDK-내부 `ImmutableCollections.MapN` 백킹 타입이 AOT introspect 안 되던 문제 해결. wire shape에 의존한 스크립트 변경 불필요; 기존 substring 테스트도 그대로 통과.
 
 ### Fixed
 
 - **WebClient DNS-time 방어 공백 메움.** v3.0.x의 `ssrf-guard-webclient`는 URL-time 필터만 실행 — 화이트리스트를 통과한 호스트가 DNS 시점에 사설 IP로 resolve될 수 있었음 (전형적인 DNS 리바인딩 → 메타데이터 공격). 새 `SsrfGuardReactorAddressResolverGroup`이 reactor-netty의 `AddressResolverGroup`에 후킹해서 RestClient 모듈이 Apache HttpClient `DnsResolver` 단계에서 적용하는 것과 동일한 사설 IP 필터를 적용. WebFlux 앱도 이제 차단형 RestClient 앱이 갖던 2단계 방어 (URL + DNS) 동등하게 받음. reactor-netty 클래스패스 의존 — 비-Netty WebFlux 백엔드 (Jetty Reactive, Helidon)는 URL-time 필터만 작동하고 connector 교체는 스킵.
+
+### Migration
+
+v3.1.0로 그냥 올리기 — 소비자 코드 변경 없음. 메타 `kr.devslab:ssrf-guard:3.1.0`도 v3.0.x처럼 `-core`, `-httpclient5`, `-restclient`를 transitive로 끌어옴. 새 모듈 (`-llm`, `-langchain4j`)은 opt-in — 좌표 추가 안 하면 따라오지 않음.
+
+기존 `SecurityException` catch 코드는 그대로 동작 (`SsrfGuardException`이 여전히 `SecurityException` 서브클래스). 구조화 `e.reason()` 접근하려면 `SsrfGuardException`을 catch.
+
+Native-image 소비자: `kr.devslab:ssrf-guard-llm:3.1.0` (또는 transitive로 끌어오는 모듈) 추가하면 AOT 프로세서가 등록된 hints 자동 인식.
 
 ## [3.0.1] — 메트릭 빈 classpath 게이트 수정
 

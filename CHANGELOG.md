@@ -7,6 +7,25 @@ The source of truth for the entries below is [docs/changelog.md](docs/changelog.
 
 ## [Unreleased]
 
+## [3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints
+
+### Added
+
+- New module **`ssrf-guard-llm`** — framework-agnostic JSON tool-input validator (`ToolInputGuard` + `JsonToolInputGuard`). Holds the URL detection + policy validation logic the adapter modules share.
+- New module **`ssrf-guard-langchain4j`** — wraps LangChain4j `ToolExecutor`. Same defense as `-springai` for the other major Java LLM framework. Spring auto-wrap via `BeanPostProcessor`; `SsrfGuardedToolExecutors.wrap(...)` for non-Spring.
+- **GraalVM native-image hints** via `META-INF/spring/aot.factories` in `-llm`. Adapter modules get free AOT support from Spring Boot 3.
+
+### Changed
+
+- `ssrf-guard-springai` refactored to a ~30-line thin adapter over `-llm`. Public API unchanged.
+- Error payload backed by typed `SsrfBlockPayload` record (was `Map.of`). Same JSON wire shape; better AOT introspection.
+
+### Fixed
+
+- **WebClient DNS-time defense gap closed.** `SsrfGuardReactorAddressResolverGroup` filters reactor-netty's resolved IPs against the private/loopback ranges — closes the v3.0.x DNS-rebinding window WebFlux apps had.
+
+Full notes in [docs/changelog.md](docs/changelog.md#310--llm-core-extraction-langchain4j-webclient-dns-gap-graalvm-hints).
+
 ## [3.0.1] — Fix metrics bean classpath gate
 
 ### Fixed
@@ -58,7 +77,8 @@ semantic-release rollup. Tagged but **never published to Maven Central**.
 
 Initial public release. Tagged but **never published to Maven Central**.
 
-[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v3.0.1...HEAD
+[Unreleased]: https://github.com/devslab-kr/ssrf-guard/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v3.1.0
 [3.0.1]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v3.0.1
 [3.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v3.0.0
 [2.0.0]: https://github.com/devslab-kr/ssrf-guard/releases/tag/v2.0.0
