@@ -26,7 +26,9 @@ rootProject.name = "ssrf-guard"
 //   ssrf-guard-resttemplate — Spring RestTemplate interceptor + auto-config
 //   ssrf-guard-webclient    — Spring WebFlux ExchangeFilterFunction + auto-config
 //   ssrf-guard-feign        — Spring Cloud OpenFeign interceptor + auto-config
-//   ssrf-guard-springai     — Spring AI tool URL validation
+//   ssrf-guard-llm          — framework-agnostic JSON tool input validation (v3.1+)
+//   ssrf-guard-springai     — Spring AI tool URL validation (thin adapter over -llm)
+//   ssrf-guard-langchain4j  — LangChain4j tool URL validation (thin adapter over -llm, v3.1+)
 //   ssrf-guard-jdkhttp      — java.net.http.HttpClient wrapper (no Spring)
 //   ssrf-guard-okhttp       — OkHttp interceptor + DNS
 //   ssrf-guard              — v2.0.0-compatible meta artifact (restclient + httpclient5)
@@ -37,7 +39,9 @@ include(
     "ssrf-guard-resttemplate",
     "ssrf-guard-webclient",
     "ssrf-guard-feign",
+    "ssrf-guard-llm",
     "ssrf-guard-springai",
+    "ssrf-guard-langchain4j",
     "ssrf-guard-jdkhttp",
     "ssrf-guard-okhttp",
     "ssrf-guard",
