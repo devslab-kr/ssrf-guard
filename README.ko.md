@@ -177,6 +177,19 @@ WARN k.d.s.core.UrlPolicy : ssrf-guard: Host not allowed: evil.com (reason=block
 
 태그가 bounded — Prometheus / Datadog / CloudWatch 문제 없음.
 
+## 성능
+
+인터셉터의 allowed 경로 비용은 **요청당 ~5 μs** (JMH, JDK 21) — 100 ms 외부 API 호출 대비 **0.005% 오버헤드**, 실질적으로 invisible.
+
+| Hot path | 평균 비용 | 비고 |
+|---|---:|---|
+| `UrlPolicy.validate` allowed | ~5 μs | 프로덕션 트래픽의 99%+ |
+| `UrlPolicy.validate` blocked | 5-12 μs | early-exit (IP 리터럴)이 late-exit (whitelist)보다 저렴 |
+| `JsonToolInputGuard` 작은 JSON | ~6 μs | URL 하나짜리 LLM 툴 입력 |
+| `JsonToolInputGuard` ~2 KB JSON | ~24 μs | URL 3개 있는 RAG-augmented 툴 입력 |
+
+전체 방법론, stdev 포함 케이스별 숫자, 해석 가이드는 [`BENCHMARKS.md`](./BENCHMARKS.md). 직접 재현: `./gradlew :ssrf-guard-benchmarks:jmh`.
+
 ## 자동 구성이 등록하는 빈 (RestClient 모듈)
 
 `ssrf.guard.enabled=true`(기본값)이면 RestClient 자동설정이 활성화되어 다음을 등록:
