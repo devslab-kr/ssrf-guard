@@ -17,6 +17,10 @@ Tracking v3.1.0 work. Released items will move into their own section below when
 
 - **`ssrf-guard-springai` refactored to a thin adapter (~30 lines).** Delegates to `JsonToolInputGuard` from the new `-llm` module. Public API unchanged — every constructor and method on `SsrfGuardedToolCallback` keeps the same shape. v3.0.x consumers see no API change; they just pick up `ssrf-guard-llm` transitively.
 
+### Fixed
+
+- **WebClient DNS-time defense gap closed.** v3.0.x's `ssrf-guard-webclient` only ran the URL-time filter — a host that passed the whitelist could still resolve to a private IP at DNS time (the classic DNS-rebinding-to-metadata attack). The new `SsrfGuardReactorAddressResolverGroup` plugs into reactor-netty's `AddressResolverGroup` and filters resolved IPs against the same private-IP ranges the RestClient module checks at the Apache HttpClient `DnsResolver` step. WebFlux apps now get the same two-layer defense (URL + DNS) the blocking RestClient apps already had. Gated on reactor-netty being on the classpath — non-Netty WebFlux backends (Jetty Reactive, Helidon) still get the URL-time filter and just skip the connector swap.
+
 ## [3.0.1] — Fix metrics bean classpath gate
 
 ### Fixed
