@@ -29,7 +29,7 @@
 
 전체 인덱스: [github.com/devslab-kr/devslab-examples](https://github.com/devslab-kr/devslab-examples).
 
-## 모듈 매트릭스 (v3.0.0)
+## 모듈 매트릭스
 
 쓰는 HTTP 클라이언트에 맞는 모듈만 고르세요. `ssrf-guard-core`는 transitive로 따라옴.
 
@@ -38,9 +38,11 @@
 | **`ssrf-guard`** | 메타 — RestClient + HttpClient5 (v2.0.0 호환) | ✅ |
 | `ssrf-guard-restclient` | Spring 6.1+ `RestClient` | ✅ |
 | `ssrf-guard-resttemplate` | Spring `RestTemplate` | ✅ |
-| `ssrf-guard-webclient` | Spring WebFlux `WebClient` | ✅ |
+| `ssrf-guard-webclient` | Spring WebFlux `WebClient` — URL 단계 필터 + reactor-netty DNS 단계 IP 필터 (v3.1+) | ✅ |
 | `ssrf-guard-feign` | Spring Cloud OpenFeign | ✅ |
-| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` URL 검증 — LLM 에이전트 SSRF 차단 | ✅ |
+| `ssrf-guard-llm` 🧩 | 프레임워크-중립 JSON 툴 입력 검증 (v3.1+) — LLM 어댑터들이 재사용 | — |
+| **`ssrf-guard-springai`** ⭐ | Spring AI `ToolCallback` URL 검증 — `-llm` 위의 thin adapter | ✅ |
+| **`ssrf-guard-langchain4j`** ⭐ | LangChain4j `ToolExecutor` URL 검증 — Java LLM 양대 프레임워크 다른 한쪽 (v3.1+) | ✅ |
 | `ssrf-guard-httpclient5` | Apache HttpClient 5 직접 | — |
 | `ssrf-guard-jdkhttp` | `java.net.http.HttpClient` | — |
 | `ssrf-guard-okhttp` | OkHttp | — |
