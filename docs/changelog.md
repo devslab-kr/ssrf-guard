@@ -17,6 +17,14 @@ Tracking v3.1.0 work. Released items will move into their own section below when
 
 - **`ssrf-guard-springai` refactored to a thin adapter (~30 lines).** Delegates to `JsonToolInputGuard` from the new `-llm` module. Public API unchanged — every constructor and method on `SsrfGuardedToolCallback` keeps the same shape. v3.0.x consumers see no API change; they just pick up `ssrf-guard-llm` transitively.
 
+### Added (continued)
+
+- **GraalVM native-image friendliness.** `ssrf-guard-llm` registers a `RuntimeHintsRegistrar` (via `META-INF/spring/aot.factories`) so Spring Boot's AOT processor learns about the reflective surface this library uses at runtime: the new `SsrfBlockPayload` record (Jackson-serialised on every block) and the `BlockReason` enum (also Jackson-touched for its `label`). Replaces the previous `Map.of(...)` payload form, which used JVM-private `ImmutableCollections.MapN` types that AOT couldn't introspect. Adapter modules (`-springai`, `-langchain4j`, all Spring autoconfigs) get free AOT coverage from Spring Boot 3 — they only host `@Bean` factory methods and a `BeanPostProcessor`, both of which the AOT processor already handles.
+
+### Changed (continued)
+
+- **Error-payload shape stabilised.** The JSON object an LLM sees on an SSRF block is now backed by the typed `SsrfBlockPayload` record (`{error, reason, url, message, guidance}`). Wire-compatible with v3.0.x — same field names, same values. Existing tests assert on substring matches against those names and keep passing; if you scripted around the wire shape you don't need to change anything.
+
 ### Fixed
 
 - **WebClient DNS-time defense gap closed.** v3.0.x's `ssrf-guard-webclient` only ran the URL-time filter — a host that passed the whitelist could still resolve to a private IP at DNS time (the classic DNS-rebinding-to-metadata attack). The new `SsrfGuardReactorAddressResolverGroup` plugs into reactor-netty's `AddressResolverGroup` and filters resolved IPs against the same private-IP ranges the RestClient module checks at the Apache HttpClient `DnsResolver` step. WebFlux apps now get the same two-layer defense (URL + DNS) the blocking RestClient apps already had. Gated on reactor-netty being on the classpath — non-Netty WebFlux backends (Jetty Reactive, Helidon) still get the URL-time filter and just skip the connector swap.

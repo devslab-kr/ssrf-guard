@@ -152,14 +152,10 @@ public final class JsonToolInputGuard implements ToolInputGuard {
 
     private String formatErrorPayload(SsrfGuardException e, String url) {
         try {
-            return MAPPER.writeValueAsString(Map.of(
-                    "error", "ssrf_blocked",
-                    "reason", e.reason().label(),
-                    "url", url,
-                    "message", e.getMessage(),
-                    "guidance", "Refuse the request or ask the user for a different URL. " +
-                            "The blocked URL targets a private/internal network or violates the application's SSRF policy."
-            ));
+            // Typed record instead of Map.of(...) — see SsrfBlockPayload
+            // javadoc for the GraalVM / wire-stability rationale.
+            return MAPPER.writeValueAsString(
+                    SsrfBlockPayload.of(e.reason().label(), url, e.getMessage()));
         } catch (Exception jsonErr) {
             // Fallback — minimal hand-rolled JSON. We control all the field
             // values here so this stays safe to concatenate.
