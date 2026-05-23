@@ -55,6 +55,10 @@ jobs:
           generate_release_notes: true
           name: ${{ github.ref_name }}
           fail_on_unmatched_files: false
+          # Glob across every module's build/libs/ so the release page picks up
+          # ssrf-guard-core / -restclient / -resttemplate / -webclient / -feign /
+          # -springai / -httpclient5 / -jdkhttp / -okhttp / -guard without
+          # per-module entries.
           files: |
-            build/libs/*.jar
-            build/libs/*.asc
+            **/build/libs/*.jar
+            **/build/libs/*.asc
