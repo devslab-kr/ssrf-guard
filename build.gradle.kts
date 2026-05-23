@@ -31,8 +31,11 @@ subprojects {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(21))
         }
-        withSourcesJar()
-        withJavadocJar()
+        // NOTE: don't call withSourcesJar() / withJavadocJar() here — the
+        // Vanniktech maven-publish plugin adds them itself via its own task
+        // names (`mavenPlainSourcesJar`, `mavenPlainJavadocJar`). Calling
+        // both produces "multiple artifacts with the identical extension and
+        // classifier" at publish time.
     }
 
     tasks.withType<JavaCompile>().configureEach {
@@ -89,16 +92,16 @@ subprojects {
         }
     }
 
-    // Vanniktech's auto-generated javadoc jar hardcodes its archive base name
-    // to `<project>-maven-javadoc`; without this the GitHub Release ends up
-    // with names like `ssrf-guard-core-maven-javadoc-X.Y.Z-javadoc.jar`.
-    // Pin it inside afterEvaluate so we win the last-writer race against the
-    // plugin's own configuration phase.
-    afterEvaluate {
-        tasks.findByName("mavenPlainJavadocJar")?.let {
-            (it as AbstractArchiveTask).archiveBaseName.set(project.name)
-        }
+    // Note on javadoc jar filenames: Vanniktech's auto-generated javadoc jar
+    // uses the archive base name `<project>-maven-javadoc`, producing files
+    // like `ssrf-guard-core-maven-javadoc-X.Y.Z-javadoc.jar` locally. Renaming
+    // via `mavenPlainJavadocJar.archiveBaseName` triggers a Gradle implicit-
+    // dependency validation error against `generateMetadataFileForMavenPublication`,
+    // which reads the jar to compute the .module checksum. We accept the
+    // cosmetic local filename — the published Maven Central artifact uses
+    // `mavenPublishing.coordinates(...)` and is named correctly there.
 
+    afterEvaluate {
         // Same lesson as the api-log starter: subproject publications under
         // the Spring Boot BOM have no explicit dep versions, so Gradle's
         // module-metadata validator rejects them. `versionMapping {
