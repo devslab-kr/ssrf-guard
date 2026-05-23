@@ -66,6 +66,7 @@ plugins:
             Guides: 가이드
             Security Model: 보안 모델
             Configuration: 설정
+            Performance: 성능
             Changelog: 변경 이력
             Contributing: 기여하기
 
@@ -120,5 +121,6 @@ nav:
   - Guides:
       - Security Model: guides/security-model.md
       - Configuration: guides/configuration.md
+      - Performance: guides/performance.md
   - Changelog: changelog.md
   - Contributing: contributing.md

@@ -177,6 +177,19 @@ WARN k.d.s.core.UrlPolicy : ssrf-guard: Host not allowed: evil.com (reason=block
 
 Tags are bounded (`reason` is an enum, `scheme` is http/https) — Prometheus / Datadog / CloudWatch ingest happily.
 
+## Performance
+
+The interceptor's allowed-path cost is **~5 μs per request** (JMH, JDK 21) — **0.005% overhead** on a 100 ms remote API call, invisible in practice.
+
+| Hot path | Avg cost | Notes |
+|---|---:|---|
+| `UrlPolicy.validate` allowed | ~5 μs | 99%+ of production traffic |
+| `UrlPolicy.validate` blocked | 5-12 μs | Cheaper if early-exit (IP literal) than late-exit (whitelist) |
+| `JsonToolInputGuard` small JSON | ~6 μs | LLM tool input with one URL |
+| `JsonToolInputGuard` ~2 KB JSON | ~24 μs | RAG-augmented tool input with 3 URLs |
+
+Full methodology, per-case numbers with stdev, and how to read them: see [`BENCHMARKS.md`](./BENCHMARKS.md). Reproduce yourself with `./gradlew :ssrf-guard-benchmarks:jmh`.
+
 ## What auto-configuration registers (RestClient module)
 
 When `ssrf.guard.enabled=true` (the default), the RestClient autoconfig activates and registers:
