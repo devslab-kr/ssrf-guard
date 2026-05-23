@@ -6,6 +6,96 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [3.0.0] — Multi-module + LLM agent SSRF defense
+
+The v2.0.0 starter was a single jar that only worked with Spring's `RestClient`. v3.0.0 splits the codebase along client boundaries, adds support for every common JVM HTTP stack, and ships a **Spring AI Tool wrapper** that closes the SSRF surface LLM agents have been introducing for the last two years.
+
+### Added — new modules (opt-in)
+
+| Module | Use case |
+|---|---|
+| `ssrf-guard-core` | Policy / NetUtil / Micrometer metrics interface — no Spring dependency |
+| `ssrf-guard-httpclient5` | Apache HttpClient 5 `DnsResolver` + `RedirectStrategy` (TOCTOU closure) |
+| `ssrf-guard-restclient` | Spring 6.1+ `RestClient` autoconfig (the v2.0.0 surface, now its own module) |
+| `ssrf-guard-resttemplate` | **NEW** — Spring `RestTemplate` autoconfig for the enterprise/legacy crowd |
+| `ssrf-guard-webclient` | **NEW** — Spring WebFlux `WebClient` `ExchangeFilterFunction` + autoconfig |
+| `ssrf-guard-feign` | **NEW** — Spring Cloud OpenFeign `RequestInterceptor` + autoconfig |
+| `ssrf-guard-springai` | **NEW** — Spring AI `ToolCallback` wrapper that validates URL-shaped tool arguments before LLM-driven execution. The hot SSRF surface in 2025+ |
+| `ssrf-guard-jdkhttp` | **NEW** — `java.net.http.HttpClient` wrapper (no Spring, JDK 11+) |
+| `ssrf-guard-okhttp` | **NEW** — OkHttp `Interceptor` + `Dns` (no Spring) |
+| `ssrf-guard` | Meta artifact — bundles `-core` + `-httpclient5` + `-restclient` for v2.0.0 back-compat |
+
+### Added — defense-in-depth hardening
+
+- **IP-literal host rejection** (`ssrf.guard.reject-ip-literal-hosts=true` default). Any URL whose host parses as an IP literal in *any* form — dotted decimal (`127.0.0.1`), bare decimal (`2130706433`), hex (`0x7f000001`), octal (`0177.0.0.1`), partial (`127.1`), IPv6 (`[::1]`) — is rejected at the URL-time check, before DNS. Closes the obfuscated-IP bypass class.
+- **Userinfo rejection** (`ssrf.guard.reject-user-info=true` default). URLs of the form `https://user:pass@host/...` are rejected — known SSRF bypass vector and credential-leak risk.
+- **IPv4-mapped IPv6 + 6to4 unmapping**. `::ffff:10.0.0.5` and `2002:0a00::` (the 6to4 form wrapping 10.0.0.0/8) are now correctly classified as private, not "public IPv6 that happens to embed an internal v4". Java's `isLoopbackAddress()` misses these.
+
+### Added — observability
+
+- **Micrometer metrics**, auto-wired when a `MeterRegistry` bean is on the classpath:
+  ```
+  ssrf_guard_blocked_total{reason="blocked_private_ip", scheme="http"} 42
+  ssrf_guard_allowed_total{scheme="https"} 13042
+  ```
+- **Structured WARN logs** on every block: `ssrf-guard: <message> (reason=blocked_private_ip, scheme=http, host=169.254.169.254)`.
+
+### Changed — BREAKING
+
+- **Package renames.** Types moved out of the catch-all `kr.devslab.ssrfguard.security` package into their respective modules. The `ssrf-guard` meta artifact re-exports them, so `import kr.devslab.ssrfguard.*` consumers may need to update imports:
+
+  | v2.0.0 | v3.0.0 |
+  | --- | --- |
+  | `kr.devslab.ssrfguard.autoconfigure.SsrfGuardAutoConfiguration` | `kr.devslab.ssrfguard.restclient.SsrfGuardRestClientAutoConfiguration` |
+  | `kr.devslab.ssrfguard.autoconfigure.SsrfGuardProperties` | `kr.devslab.ssrfguard.core.SsrfGuardProperties` |
+  | `kr.devslab.ssrfguard.security.SsrfGuardInterceptor` | `kr.devslab.ssrfguard.restclient.SsrfGuardClientHttpRequestInterceptor` |
+  | `kr.devslab.ssrfguard.security.SafeDnsResolver` | `kr.devslab.ssrfguard.httpclient5.SafeDnsResolver` |
+  | `kr.devslab.ssrfguard.security.SafeRedirectStrategy` | `kr.devslab.ssrfguard.httpclient5.SafeRedirectStrategy` |
+  | `kr.devslab.ssrfguard.security.NetUtil` | `kr.devslab.ssrfguard.core.NetUtil` |
+- **`SecurityException` → `SsrfGuardException`.** All rejection paths now throw `SsrfGuardException` (still a subclass of `SecurityException`, so v2.0.0 catch blocks keep working). The exception carries a `BlockReason` enum tag for metrics / logging.
+- **New properties.** `ssrf.guard.reject-ip-literal-hosts` and `ssrf.guard.reject-user-info` default to `true` — turning them off restores v2.0.0 behaviour on those two checks.
+
+### Migration
+
+For most consumers, **update the version and rebuild** — that's it:
+
+```xml
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+The `ssrf-guard` meta artifact transitively pulls in `-core`, `-httpclient5`, and `-restclient`, which together provide the entire v2.0.0 surface.
+
+If you use a different HTTP client, pick the matching module:
+
+```xml
+<!-- RestTemplate -->
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard-resttemplate</artifactId>
+    <version>3.0.0</version>
+</dependency>
+
+<!-- WebClient -->
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard-webclient</artifactId>
+    <version>3.0.0</version>
+</dependency>
+
+<!-- Spring AI tool calls -->
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard-springai</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+If your code catches `SecurityException` from outbound calls, it still works — `SsrfGuardException extends SecurityException`. If you want the structured tag, catch `SsrfGuardException` and inspect `e.reason()`.
+
 ## [2.0.0] — Rebrand to `kr.devslab:ssrf-guard`
 
 ### Changed

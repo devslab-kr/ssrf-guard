@@ -3,87 +3,163 @@
 ## 요구사항
 
 - **Java 21+**
-- **Spring Boot 3.5+**
+- **Spring Boot 3.5+** (Spring 기반 모듈)
+- Spring AI 모듈: **Spring AI 1.0+**
+- Feign 모듈: **Spring Cloud 2024.0+**
 
-## 의존성 추가
+## 모듈 선택
 
-=== "Maven"
+ssrf-guard v3.0.0은 HTTP 클라이언트 경계로 분리되어 있습니다. 실제로 쓰는 모듈만 고르면 됩니다.
+
+=== "RestClient (Spring Boot 3.x 기본)"
 
     ```xml
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard</artifactId>
-        <version>2.0.0</version>
+        <version>3.0.0</version>
     </dependency>
     ```
 
-=== "Gradle (Kotlin DSL)"
+    메타 아티팩트가 `-core`, `-httpclient5`, `-restclient`를 끌어옵니다 — v2.0.0 전체 surface와 동등.
 
-    ```kotlin
-    dependencies {
-        implementation("kr.devslab:ssrf-guard:2.0.0")
-    }
+=== "RestTemplate"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-resttemplate</artifactId>
+        <version>3.0.0</version>
+    </dependency>
     ```
 
-=== "Gradle (Groovy)"
+    `RestTemplateBuilder`에 동일한 `ClientHttpRequestInterceptor` + `HttpComponentsClientHttpRequestFactory`를 wiring. 둘 다 쓰면 `-restclient`도 추가.
 
-    ```groovy
-    dependencies {
-        implementation 'kr.devslab:ssrf-guard:2.0.0'
-    }
+=== "WebClient (WebFlux)"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-webclient</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    ```
+
+    자동설정된 `WebClient.Builder`에 `ExchangeFilterFunction` 추가. Reactive — 정책 위반은 `Mono.error(SsrfGuardException)`으로 옴.
+
+=== "Feign"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-feign</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    ```
+
+    `feign.RequestInterceptor` 등록 — Spring Cloud OpenFeign이 모든 `@FeignClient`에 자동 적용.
+
+=== "Spring AI 툴 콜"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-springai</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    ```
+
+    모든 `ToolCallback` 빈을 URL 인자 검증으로 감쌈. **LLM 에이전트가 URL을 받아 fetch하는 시나리오의 결정적인 새 SSRF 표면.**
+
+=== "JDK HttpClient (Spring 없음)"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-jdkhttp</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    ```
+
+    직접 사용:
+    ```java
+    HttpClient safe = new SsrfGuardedHttpClient(HttpClient.newHttpClient(), urlPolicy);
+    ```
+
+=== "OkHttp (Spring 없음)"
+
+    ```xml
+    <dependency>
+        <groupId>kr.devslab</groupId>
+        <artifactId>ssrf-guard-okhttp</artifactId>
+        <version>3.0.0</version>
+    </dependency>
+    ```
+
+    ```java
+    OkHttpClient client = new OkHttpClient.Builder()
+        .addInterceptor(new SsrfGuardOkHttpInterceptor(urlPolicy))
+        .dns(new SsrfGuardOkHttpDns(hostPolicy, true))
+        .build();
     ```
 
 !!! tip "최신 버전"
-    `2.0.0`은 [Maven Central](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard)의 최신 버전으로 교체.
+    `3.0.0`을 [Maven Central](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard) 최신으로 교체.
 
-!!! info "1.x에서 오는 경우?"
-    레거시 `com.devs.lab:ssrf-guard-spring-boot-starter`는 Maven Central에 발행된 적 없습니다. v2.0.0이 `kr.devslab:ssrf-guard`로의 첫 정식 릴리즈. 마이그레이션 매핑은 [v2.0.0 변경 이력](../changelog.md) 참고.
+!!! info "v2.0.0에서 올라온다면"
+    `kr.devslab:ssrf-guard` 좌표는 여전히 동작 — 메타 아티팩트가 `-core`, `-httpclient5`, `-restclient`를 끌어옴. 대부분 버전만 올리고 다시 빌드하면 끝. `kr.devslab.ssrfguard.security.*` 직접 import한 코드는 [v3.0.0 changelog](../changelog.md#300--multi-module--llm-agent-ssrf-defense)의 패키지 매핑 참고.
 
-## ssrf-guard가 가져오는 의존성
+## 최소 설정
 
-- `spring-boot-starter` (transitive)
-- `spring-boot-autoconfigure`
-- `org.apache.httpcomponents.client5:httpclient5` — 래핑된 `RestClient`의 백엔드 HTTP 스택
-
-Spring Web (`spring-boot-starter-web`)은 compile-time에는 **옵셔널**이지만 런타임에는 필요 — 자동 구성이 `@ConditionalOnClass(RestClient.class)`로 게이팅됩니다. `RestClient`를 전혀 사용하지 않는 pure-WebFlux 애플리케이션에서는 가드가 활성화되지 않습니다.
-
-## 직접 제공할 것
-
-없습니다. ssrf-guard는 Spring Boot 기본 `RestClient.Builder`에 자기 자신을 핀(pin)하는 자동 구성을 제공하므로, 코드에서 만드는 모든 `RestClient`가 SSRF 정책을 자동으로 picks up합니다.
-
-다만 `application.yml`에 다음을 설정하는 게 일반적:
+어떤 모듈이든 `ssrf.guard.*` 키는 동일:
 
 ```yaml title="application.yml"
 ssrf:
   guard:
-    enabled: true                # 기본값 — false면 완전 opt-out
-    suffixes:                    # 최소한 이거 — 비어 있으면 "모두 차단"
+    enabled: true                    # 기본값 — false로 끄면 가드 비활성화
+    suffixes:                        # 최소한 이거 — 비어있으면 "모든 호스트 차단"
       - api.partner.com
       - example.org
 ```
 
-`ssrf.guard.*` 설정 없는 consumer는 가드가 활성화되지만 **whitelist 호스트 없음** — 즉 모든 outbound 호출이 `Host not allowed`로 실패. 의도된 fail-closed 동작이지만 알아둘 가치 있음.
+화이트리스트 비워두면 **fail-closed** — 모든 외부 호출이 `Host not allowed`로 막힘. 의도된 동작입니다.
 
-## 자동 구성이 하는 일
+## 추가 하드닝 (기본값이 안전)
 
-`ssrf.guard.enabled`가 `true` (기본값)이고 `RestClient`가 classpath에 있으면 `SsrfGuardAutoConfiguration`이 활성화되어 다음을 등록:
+```yaml
+ssrf:
+  guard:
+    reject-ip-literal-hosts: true    # 기본 — http://127.0.0.1, http://2130706433 등 차단
+    reject-user-info: true           # 기본 — https://user:pass@host/... 차단
+    block-private-networks: true     # 기본 — DNS 단계 사설/메타데이터 IP 필터
+    follow-redirects: true           # 기본 — 매 hop 재검증
+    allowed-schemes: [https]         # 기본 [http, https]보다 엄격
+    allowed-ports: [443]             # 기본 [-1, 80, 443]보다 엄격
+```
 
-- `SafeDnsResolver` — DNS 시점에 화이트리스트 재적용 + 사설/loopback/link-local/multicast IP 필터
-- `CloseableHttpClient` — Apache HttpClient 5 기반, resolver 연결 + (리다이렉트 활성 시) `SafeRedirectStrategy`로 매 hop 재검증
-- `HttpComponentsClientHttpRequestFactory` — 설정된 connect/read timeout 적용
-- `SsrfGuardInterceptor` — DNS 전 스킴/호스트/포트 프론트라인 체크
-- `ssrfRestClientCustomizer` — factory + interceptor를 Spring Boot 자동 `RestClient.Builder`에 핀하는 `RestClientCustomizer`
+## 관찰성 (선택)
 
-모든 빈이 `@ConditionalOnMissingBean`. 직접 빈을 정의하면 오버라이드됩니다.
+`spring-boot-starter-actuator`를 추가하면 Micrometer 메트릭이 무료:
+
+```
+ssrf_guard_blocked_total{reason="blocked_private_ip", scheme="http"} 42
+ssrf_guard_allowed_total{scheme="https"} 13042
+```
+
+태그가 bounded (`reason`은 enum, `scheme`은 http/https) 라서 Prometheus / Datadog / CloudWatch에 문제 없이 적재됨.
 
 ## 설치 확인
 
-앱 시작 후 자동 구성 빈이 컨텍스트에 있는지 확인:
+Spring 모듈은 `--debug` 출력에 자동설정 이름이 보임:
 
 ```bash
-./gradlew bootRun --args='--debug' | grep SsrfGuardAutoConfiguration
+./gradlew bootRun --args='--debug' | grep -E 'SsrfGuard.*AutoConfiguration'
 ```
 
-`SsrfGuardAutoConfiguration matched: ...` 같은 줄이 보여야 합니다. 의도적으로 차단된 URL을 시도하면 로그에서 `SecurityException: Host not allowed: ...`를 보게 됩니다.
+`matched:` 라인이 최소 하나 보여야 정상. 의도적으로 차단되는 URL을 호출하면:
 
-실제 partner API에 대한 가드 동작을 보려면 [빠른 시작](quickstart.md)으로 이동.
+```
+WARN  k.d.s.core.UrlPolicy : ssrf-guard: Host not allowed: evil.com (reason=blocked_host, scheme=https, host=evil.com)
+```
+
+다음은 [빠른 시작](quickstart.md)에서 실제 파트너 API로 동작 확인하기, 또는 위협 모델 전체는 [보안 모델](../guides/security-model.md).

@@ -6,6 +6,96 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
+## [3.0.0] — 멀티모듈 + LLM 에이전트 SSRF 방어
+
+v2.0.0 스타터는 단일 jar로 Spring `RestClient`만 지원했지만, v3.0.0은 HTTP 클라이언트 경계로 코드를 분할하고 모든 JVM HTTP 스택에 대한 모듈을 추가했으며, 지난 2년간 LLM 에이전트가 만들어온 SSRF 표면을 막는 **Spring AI Tool 래퍼**를 출시합니다.
+
+### Added — 새 모듈 (opt-in)
+
+| 모듈 | 용도 |
+|---|---|
+| `ssrf-guard-core` | 정책 / NetUtil / Micrometer 메트릭 인터페이스 — Spring 의존성 없음 |
+| `ssrf-guard-httpclient5` | Apache HttpClient 5 `DnsResolver` + `RedirectStrategy` (TOCTOU 차단) |
+| `ssrf-guard-restclient` | Spring 6.1+ `RestClient` 자동설정 (v2.0.0의 surface가 별도 모듈로) |
+| `ssrf-guard-resttemplate` | **NEW** — 엔터프라이즈/레거시용 Spring `RestTemplate` 자동설정 |
+| `ssrf-guard-webclient` | **NEW** — Spring WebFlux `WebClient` `ExchangeFilterFunction` + 자동설정 |
+| `ssrf-guard-feign` | **NEW** — Spring Cloud OpenFeign `RequestInterceptor` + 자동설정 |
+| `ssrf-guard-springai` | **NEW** — Spring AI `ToolCallback` 래퍼. LLM이 실행하기 전 URL 형식 인자 검증. 2025+ 가장 핫한 SSRF 표면 |
+| `ssrf-guard-jdkhttp` | **NEW** — `java.net.http.HttpClient` 래퍼 (Spring 없음, JDK 11+) |
+| `ssrf-guard-okhttp` | **NEW** — OkHttp `Interceptor` + `Dns` (Spring 없음) |
+| `ssrf-guard` | 메타 아티팩트 — `-core` + `-httpclient5` + `-restclient` 묶음으로 v2.0.0 호환 |
+
+### Added — 방어 강화
+
+- **IP 리터럴 호스트 거부** (`ssrf.guard.reject-ip-literal-hosts=true` 기본). 호스트가 어떤 형식의 IP 리터럴이든 — dotted decimal (`127.0.0.1`), bare decimal (`2130706433`), hex (`0x7f000001`), octal (`0177.0.0.1`), 부분 (`127.1`), IPv6 (`[::1]`) — URL 단계에서 DNS 전에 거부. 난독화된 IP 우회 클래스를 통째로 차단.
+- **Userinfo 거부** (`ssrf.guard.reject-user-info=true` 기본). `https://user:pass@host/...` 형식 거부 — 알려진 SSRF 우회 벡터이자 credential 누출 리스크.
+- **IPv4-mapped IPv6 + 6to4 unmapping**. `::ffff:10.0.0.5`와 `2002:0a00::` (10.0.0.0/8을 wrap한 6to4)이 이제 사설로 정확히 분류됨 — Java의 `isLoopbackAddress()`가 놓치던 우회.
+
+### Added — 관찰성
+
+- **Micrometer 메트릭**. 클래스패스에 `MeterRegistry` 빈이 있으면 자동:
+  ```
+  ssrf_guard_blocked_total{reason="blocked_private_ip", scheme="http"} 42
+  ssrf_guard_allowed_total{scheme="https"} 13042
+  ```
+- **구조화된 WARN 로그.** 차단마다: `ssrf-guard: <message> (reason=blocked_private_ip, scheme=http, host=169.254.169.254)`.
+
+### Changed — BREAKING
+
+- **패키지 변경.** catch-all `kr.devslab.ssrfguard.security` 패키지의 타입들이 각 모듈의 패키지로 이동:
+
+  | v2.0.0 | v3.0.0 |
+  | --- | --- |
+  | `kr.devslab.ssrfguard.autoconfigure.SsrfGuardAutoConfiguration` | `kr.devslab.ssrfguard.restclient.SsrfGuardRestClientAutoConfiguration` |
+  | `kr.devslab.ssrfguard.autoconfigure.SsrfGuardProperties` | `kr.devslab.ssrfguard.core.SsrfGuardProperties` |
+  | `kr.devslab.ssrfguard.security.SsrfGuardInterceptor` | `kr.devslab.ssrfguard.restclient.SsrfGuardClientHttpRequestInterceptor` |
+  | `kr.devslab.ssrfguard.security.SafeDnsResolver` | `kr.devslab.ssrfguard.httpclient5.SafeDnsResolver` |
+  | `kr.devslab.ssrfguard.security.SafeRedirectStrategy` | `kr.devslab.ssrfguard.httpclient5.SafeRedirectStrategy` |
+  | `kr.devslab.ssrfguard.security.NetUtil` | `kr.devslab.ssrfguard.core.NetUtil` |
+- **`SecurityException` → `SsrfGuardException`.** 모든 거부 경로가 `SsrfGuardException`을 던짐 (여전히 `SecurityException` 서브클래스 — v2.0.0 catch 블록은 계속 동작). `BlockReason` enum 태그를 노출.
+- **새 properties.** `ssrf.guard.reject-ip-literal-hosts`, `ssrf.guard.reject-user-info` 기본 `true` — 끄면 v2.0.0 동작으로 복원.
+
+### Migration
+
+대부분 **버전 올리고 재빌드**하면 끝:
+
+```xml
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+`ssrf-guard` 메타 아티팩트가 `-core`, `-httpclient5`, `-restclient`를 transitive로 끌어와 v2.0.0 전체 surface 제공.
+
+다른 HTTP 클라이언트를 쓰면 해당 모듈 선택:
+
+```xml
+<!-- RestTemplate -->
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard-resttemplate</artifactId>
+    <version>3.0.0</version>
+</dependency>
+
+<!-- WebClient -->
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard-webclient</artifactId>
+    <version>3.0.0</version>
+</dependency>
+
+<!-- Spring AI 툴 콜 -->
+<dependency>
+    <groupId>kr.devslab</groupId>
+    <artifactId>ssrf-guard-springai</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+외부 호출에서 `SecurityException` catch 하던 코드는 그대로 동작 — `SsrfGuardException extends SecurityException`. 구조화 태그가 필요하면 `SsrfGuardException` catch 후 `e.reason()` 검사.
+
 ## [2.0.0] — `kr.devslab:ssrf-guard`로 리브랜딩
 
 ### Changed
