@@ -1,55 +1,49 @@
-// ssrf-guard-springai — Spring AI Tool URL validation.
+// ssrf-guard-langchain4j — thin adapter wiring LangChain4j's ToolExecutor
+// to ssrf-guard-llm. Same security model as ssrf-guard-springai; different
+// framework abstraction.
 //
-// The hot SSRF surface in 2025+ is LLM agents that take a URL as a tool
-// parameter and fetch it. ChatGPT, Perplexity, every RAG pipeline ever —
-// they all have a "fetch_url" / "search_web" tool that's a one-line SSRF
-// vector if not gated.
-//
-// This module wraps Spring AI ToolCallback instances so URL-shaped arguments
-// are validated against the same UrlPolicy as the regular HTTP clients
-// before the tool actually executes.
+// Closes the same SSRF surface (LLM agent fetch_url-style tools) for the
+// LangChain4j community — the other major Java LLM framework.
 
 base {
-    archivesName.set("ssrf-guard-springai")
+    archivesName.set("ssrf-guard-langchain4j")
 }
 
 dependencies {
-    // ssrf-guard-llm carries the framework-agnostic JSON walking + URL
-    // validation logic (extracted in v3.1). Jackson follows transitively
-    // through -llm's `api` dep — this module no longer declares Jackson
-    // directly. Behaviour for v3.0.x consumers is unchanged because the
-    // public Spring AI types (`SsrfGuardedToolCallback`, the auto-config,
-    // `SsrfGuardedToolCallbacks`) keep the same signatures.
+    // The framework-agnostic core. Jackson follows transitively.
     api(project(":ssrf-guard-llm"))
     api("org.springframework.boot:spring-boot-autoconfigure")
 
-    // Spring AI Tool API — 1.0 stable. spring-ai-core was renamed to
-    // spring-ai-model where @Tool / ToolCallback / ToolDefinition live.
-    compileOnly("org.springframework.ai:spring-ai-model:1.0.7")
+    // LangChain4j 1.15.0 — first stable line. ToolExecutor lives in the
+    // main `langchain4j` artifact (the AiServices implementation),
+    // ToolExecutionRequest in `langchain4j-core` follows transitively.
+    compileOnly("dev.langchain4j:langchain4j:1.15.0")
 
+    // Micrometer — compileOnly. The MetricsConfiguration inner class is
+    // gated by @ConditionalOnClass(MeterRegistry.class), so this dep is
+    // only ever needed at compile time (the class reference inside the
+    // gated inner config) — never required at runtime by consumers.
     compileOnly("io.micrometer:micrometer-core")
+
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.springframework.ai:spring-ai-model:1.0.7")
-    testImplementation("org.springframework.ai:spring-ai-client-chat:1.0.7")
-    testImplementation("com.fasterxml.jackson.core:jackson-databind")
-    testImplementation("io.micrometer:micrometer-core")
+    testImplementation("dev.langchain4j:langchain4j:1.15.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 mavenPublishing {
     coordinates(
         providers.gradleProperty("GROUP").get(),
-        "ssrf-guard-springai",
+        "ssrf-guard-langchain4j",
         providers.gradleProperty("VERSION").get()
     )
     pom {
-        name.set("SSRF Guard — Spring AI Tool URL Validation")
-        description.set("Wraps Spring AI ToolCallback instances so URL-shaped arguments are validated against an SSRF policy before LLM-driven tool execution. Closes the SSRF surface that LLM agents (RAG pipelines, fetch_url tools) introduce.")
+        name.set("SSRF Guard — LangChain4j")
+        description.set("SSRF Guard adapter for LangChain4j tool execution. Validates URL-shaped arguments in ToolExecutionRequest before the underlying ToolExecutor runs. Thin wrapper over ssrf-guard-llm.")
         url.set(providers.gradleProperty("POM_URL"))
         inceptionYear.set(providers.gradleProperty("POM_INCEPTION_YEAR"))
         licenses {

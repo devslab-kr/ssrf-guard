@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+Tracking v3.1.0 work. Released items will move into their own section below when the tag lands.
+
+### Added
+
+- **`ssrf-guard-llm`** — new framework-agnostic core module holding the JSON walking + URL extraction + policy validation that every LLM tool adapter shares. Exposes `ToolInputGuard` (interface) and `JsonToolInputGuard` (default impl). Replaces ~200 lines of logic that previously lived inside `SsrfGuardedToolCallback`.
+- **`ssrf-guard-langchain4j`** — new adapter module wrapping LangChain4j's `ToolExecutor`. Closes the same LLM-agent SSRF surface as `ssrf-guard-springai` but for the LangChain4j ecosystem (the other major Java LLM framework). Auto-wrap via `BeanPostProcessor` for Spring Boot users; `SsrfGuardedToolExecutors.wrap(...)` helpers for non-Spring / programmatic users.
+
+### Changed
+
+- **`ssrf-guard-springai` refactored to a thin adapter (~30 lines).** Delegates to `JsonToolInputGuard` from the new `-llm` module. Public API unchanged — every constructor and method on `SsrfGuardedToolCallback` keeps the same shape. v3.0.x consumers see no API change; they just pick up `ssrf-guard-llm` transitively.
+
 ## [3.0.1] — Fix metrics bean classpath gate
 
 ### Fixed

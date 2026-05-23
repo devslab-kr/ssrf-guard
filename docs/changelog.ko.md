@@ -6,6 +6,17 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
+v3.1.0 작업 추적. 릴리즈된 항목은 태그 시 별도 섹션으로 이동.
+
+### Added
+
+- **`ssrf-guard-llm`** — 신규. 모든 LLM 툴 어댑터가 공유하는 JSON 트리 walk + URL 추출 + 정책 검증을 담는 framework-agnostic 코어 모듈. `ToolInputGuard` (인터페이스)와 `JsonToolInputGuard` (기본 구현) 노출. 이전에 `SsrfGuardedToolCallback` 내부에 있던 ~200줄 로직을 이쪽으로 이동.
+- **`ssrf-guard-langchain4j`** — 신규. LangChain4j의 `ToolExecutor`를 wrap하는 어댑터 모듈. `ssrf-guard-springai`와 동일한 LLM 에이전트 SSRF 표면을 LangChain4j 생태계 (Java LLM 양대 프레임워크 중 다른 하나) 대응. Spring Boot 사용자는 `BeanPostProcessor`로 자동 wrap; 비-Spring/프로그래매틱 사용자용 `SsrfGuardedToolExecutors.wrap(...)` 헬퍼 제공.
+
+### Changed
+
+- **`ssrf-guard-springai`가 thin adapter (~30줄)로 리팩토링.** 새 `-llm` 모듈의 `JsonToolInputGuard`에 위임. Public API 변경 없음 — `SsrfGuardedToolCallback`의 모든 생성자/메서드 시그니처 유지. v3.0.x 소비자는 API 변경 못 느낌 — 단지 `ssrf-guard-llm`을 transitive로 받게 됨.
+
 ## [3.0.1] — 메트릭 빈 classpath 게이트 수정
 
 ### Fixed
