@@ -14,10 +14,13 @@ allprojects {
     version = rootVersion
 }
 
-subprojects {
+// Configuration shared across publishable subprojects. The benchmarks module
+// is intentionally excluded — it has no publish target, JMH-generated source
+// trips `-Werror`, and there are no tests so the jacoco wiring would fail.
+configure(subprojects.filter { it.name != "ssrf-guard-benchmarks" }) {
     // All publishable subprojects share the same plugin set + Java toolchain.
-    // The few subprojects that don't publish (none currently) can opt out by
-    // not applying maven.publish.
+    // The few subprojects that don't publish (currently just -benchmarks)
+    // are filtered out above.
     apply(plugin = "java-library")
     apply(plugin = "jacoco")
     apply(plugin = "io.spring.dependency-management")

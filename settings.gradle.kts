@@ -32,6 +32,7 @@ rootProject.name = "ssrf-guard"
 //   ssrf-guard-jdkhttp      — java.net.http.HttpClient wrapper (no Spring)
 //   ssrf-guard-okhttp       — OkHttp interceptor + DNS
 //   ssrf-guard              — v2.0.0-compatible meta artifact (restclient + httpclient5)
+//   ssrf-guard-benchmarks   — JMH benchmarks (not published; see BENCHMARKS.md)
 include(
     "ssrf-guard-core",
     "ssrf-guard-httpclient5",
@@ -45,4 +46,5 @@ include(
     "ssrf-guard-jdkhttp",
     "ssrf-guard-okhttp",
     "ssrf-guard",
+    "ssrf-guard-benchmarks",
 )
