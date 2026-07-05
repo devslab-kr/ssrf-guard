@@ -146,7 +146,12 @@ public final class JsonToolInputGuard implements ToolInputGuard {
 
     private static boolean looksLikeUrl(String s) {
         if (s == null) return false;
-        String trimmed = s.trim();
+        // Lower-case before the prefix test: URI schemes are case-insensitive
+        // (RFC 3986 §3.1), so HTTP:// / HtTpS:// must be detected too. The
+        // downstream scheme check already uses equalsIgnoreCase; a
+        // case-sensitive match here would let an uppercase-scheme URL skip
+        // collection entirely and bypass the policy.
+        String trimmed = s.trim().toLowerCase();
         return trimmed.startsWith("http://") || trimmed.startsWith("https://");
     }
 

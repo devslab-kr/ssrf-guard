@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Security
+
+- **Uppercase-scheme bypass in the LLM tool-input guard fixed.** `JsonToolInputGuard` collected candidate URLs with a case-sensitive `http://` / `https://` prefix test, so a tool-input URL written with an uppercase scheme (`HTTP://169.254.169.254/…`, `HtTpS://evil.com/`) was never collected and skipped policy validation entirely — bypassing the host allowlist and IP-literal checks. URI schemes are case-insensitive (RFC 3986 §3.1) and the downstream scheme check already used `equalsIgnoreCase`, so this only affected the collection step. Detection is now case-insensitive. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`, which both route tool input through this guard.
+
 ## [3.1.0] — LLM core extraction, LangChain4j, WebClient DNS gap, GraalVM hints
 
 ### Added

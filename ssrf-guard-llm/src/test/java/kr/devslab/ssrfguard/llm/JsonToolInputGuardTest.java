@@ -94,6 +94,28 @@ class JsonToolInputGuardTest {
     }
 
     @Test
+    void blocks_uppercase_and_mixed_case_scheme_urls() {
+        // URI schemes are case-insensitive; an uppercase scheme must not let a
+        // URL skip collection and bypass the policy.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+
+        String upper = guard.checkOrFormatError("{\"url\":\"HTTP://169.254.169.254/latest/meta-data/\"}");
+        assertThat(upper)
+                .isNotNull()
+                .contains("\"error\":\"ssrf_blocked\"")
+                .contains("\"reason\":\"blocked_ip_literal\"");
+
+        String mixed = guard.checkOrFormatError("{\"request\":{\"target\":\"HtTpS://evil.com/\"}}");
+        assertThat(mixed).contains("\"error\":\"ssrf_blocked\"");
+    }
+
+    @Test
+    void still_allows_whitelisted_url_with_uppercase_scheme() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+        assertThat(guard.checkOrFormatError("{\"url\":\"HTTPS://api.example.com/v1\"}")).isNull();
+    }
+
+    @Test
     void ignores_non_http_schemes() {
         // mailto:, urn:uuid:, file:// — should not trip the URL detector
         // because looksLikeUrl() only matches http(s)://
