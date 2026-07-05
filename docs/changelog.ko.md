@@ -6,6 +6,16 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
+## [3.1.1] — LLM 툴 입력 가드의 대문자 스킴 우회 수정
+
+### Security
+
+- **LLM 툴 입력 가드의 대문자 스킴 우회 수정.** `JsonToolInputGuard`가 후보 URL을 대소문자 구분(`http://` / `https://` 접두사)으로 수집해서, 대문자 스킴으로 쓴 툴 입력 URL(`HTTP://169.254.169.254/…`, `HtTpS://evil.com/`)이 수집조차 되지 않고 정책 검증을 통째로 건너뛰었습니다 — 호스트 allowlist와 IP-literal 검사를 우회. URI 스킴은 대소문자를 구분하지 않으며(RFC 3986 §3.1) 바로 뒤의 스킴 검사는 이미 `equalsIgnoreCase`를 사용하므로, 수집 단계만 영향받은 불일치였습니다. 이제 대소문자를 구분하지 않고 감지합니다. 툴 입력을 이 가드로 거르는 `ssrf-guard-springai`, `ssrf-guard-langchain4j` 모두 영향.
+
+### Migration
+
+v3.1.1로 그대로 교체 — 소비자 코드 변경 없음. URL을 받는 LLM 툴을 노출하고 `ssrf-guard-springai` / `ssrf-guard-langchain4j`로 툴 입력을 거른다면, 이 수정을 반영하도록 업그레이드하세요.
+
 ## [3.1.0] — LLM 코어 추출, LangChain4j, WebClient DNS 공백 메움, GraalVM hints
 
 ### Added
