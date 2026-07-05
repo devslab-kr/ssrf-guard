@@ -17,7 +17,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -29,7 +29,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-resttemplate</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -41,7 +41,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-webclient</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -53,7 +53,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-feign</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -65,7 +65,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-springai</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -77,7 +77,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-langchain4j</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -89,7 +89,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-llm</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -108,7 +108,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-jdkhttp</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -123,7 +123,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-okhttp</artifactId>
-        <version>3.1.0</version>
+        <version>3.1.1</version>
     </dependency>
     ```
 
@@ -135,7 +135,7 @@ ssrf-guard 3.0+은 HTTP 클라이언트 경계로 분리되어 있습니다. 실
     ```
 
 !!! tip "최신 버전"
-    `3.1.0`을 [Maven Central](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard) 최신으로 교체.
+    `3.1.1`을 [Maven Central](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard) 최신으로 교체.
 
 !!! info "v2.0.0에서 올라온다면"
     `kr.devslab:ssrf-guard` 좌표는 여전히 동작 — 메타 아티팩트가 `-core`, `-httpclient5`, `-restclient`를 끌어옴. 대부분 버전만 올리고 다시 빌드하면 끝. `kr.devslab.ssrfguard.security.*` 직접 import한 코드는 [v3.0.0 changelog](../changelog.md#300--multi-module--llm-agent-ssrf-defense)의 패키지 매핑 참고.
