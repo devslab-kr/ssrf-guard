@@ -204,6 +204,18 @@ WARN k.d.s.core.UrlPolicy : ssrf-guard: Host not allowed: evil.com (reason=block
 
 모듈마다 자기 자동설정 보유 — `SsrfGuardRestTemplateAutoConfiguration`, `SsrfGuardWebClientAutoConfiguration`, `SsrfGuardFeignAutoConfiguration`, `SsrfGuardSpringAiAutoConfiguration`. 동일 `UrlPolicy`와 `SsrfGuardMetrics` 빈 공유. 모든 빈이 `@ConditionalOnMissingBean` — 일부만 교체 가능.
 
+## TypeScript / JavaScript 형제 프로젝트 — ssrf-guard-js
+
+같은 보안 모델을 JS 생태계로 포팅한
+[`@devslab/ssrf-guard-js`](https://www.npmjs.com/package/@devslab/ssrf-guard-js)
+([repo](https://github.com/devslab-kr/ssrf-guard-js) ·
+[docs](https://devslab-kr.github.io/ssrf-guard-js/))가 있습니다: URL-time 검증
+(`validateUrl`), DNS 검사 + optional `undici` socket pinning이 포함된 guarded
+fetch (`safeFetch`, Node — 이 프로젝트의 DNS-time guard에 대응), Cloudflare
+Workers/브라우저용 runtime-agnostic guarded fetch (`guardedFetch`), 그리고
+`-llm` / `-springai` / `-langchain4j`에 대응하는 LLM tool-input URL guard
+(`guardToolInputJson`).
+
 ## 요구사항
 
 - Java 21+

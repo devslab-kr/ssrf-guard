@@ -102,6 +102,7 @@ Continue to the [Installation guide](getting-started/installation.md) for the fu
 - **GitHub**: <https://github.com/devslab-kr/ssrf-guard>
 - **Maven Central**: <https://central.sonatype.com/artifact/kr.devslab/ssrf-guard>
 - **Docs**: <https://ssrf-guard.devslab.kr/>
+- **TypeScript / JavaScript sibling**: [`@devslab/ssrf-guard-js`](https://www.npmjs.com/package/@devslab/ssrf-guard-js) — the same security model for Node and edge runtimes ([repo](https://github.com/devslab-kr/ssrf-guard-js) · [docs](https://devslab-kr.github.io/ssrf-guard-js/))
 
 ## License
 

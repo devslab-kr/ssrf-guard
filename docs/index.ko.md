@@ -102,6 +102,7 @@ ssrf:
 - **GitHub**: <https://github.com/devslab-kr/ssrf-guard>
 - **Maven Central**: <https://central.sonatype.com/artifact/kr.devslab/ssrf-guard>
 - **Docs**: <https://ssrf-guard.devslab.kr/>
+- **TypeScript / JavaScript 형제 프로젝트**: [`@devslab/ssrf-guard-js`](https://www.npmjs.com/package/@devslab/ssrf-guard-js) — 같은 보안 모델의 Node + edge 런타임 버전 ([repo](https://github.com/devslab-kr/ssrf-guard-js) · [docs](https://devslab-kr.github.io/ssrf-guard-js/))
 
 ## 라이선스
 
