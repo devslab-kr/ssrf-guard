@@ -204,6 +204,18 @@ When `ssrf.guard.enabled=true` (the default), the RestClient autoconfig activate
 
 Each module has its own auto-config — `SsrfGuardRestTemplateAutoConfiguration`, `SsrfGuardWebClientAutoConfiguration`, `SsrfGuardFeignAutoConfiguration`, `SsrfGuardSpringAiAutoConfiguration`. They all reuse the same `UrlPolicy` and `SsrfGuardMetrics` beans. Every bean is `@ConditionalOnMissingBean`, so you can swap any piece.
 
+## TypeScript / JavaScript sibling — ssrf-guard-js
+
+The same security model, ported to the JS ecosystem as
+[`@devslab/ssrf-guard-js`](https://www.npmjs.com/package/@devslab/ssrf-guard-js)
+([repo](https://github.com/devslab-kr/ssrf-guard-js) ·
+[docs](https://devslab-kr.github.io/ssrf-guard-js/)): URL-time validation
+(`validateUrl`), a guarded fetch with DNS checks and optional `undici` socket
+pinning (`safeFetch`, Node — the counterpart of this project's DNS-time
+guards), a runtime-agnostic guarded fetch for Cloudflare Workers / browsers
+(`guardedFetch`), and the LLM tool-input URL guard (`guardToolInputJson`) —
+the JS counterpart of `-llm` / `-springai` / `-langchain4j`.
+
 ## Requirements
 
 - Java 21+
