@@ -76,12 +76,16 @@ public class SsrfGuardSpringAiAutoConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "ssrf.guard.springai", name = "wrap-tool-callbacks",
             havingValue = "true", matchIfMissing = true)
-    BeanPostProcessor ssrfGuardToolCallbackBeanPostProcessor(UrlPolicy policy) {
+    BeanPostProcessor ssrfGuardToolCallbackBeanPostProcessor(UrlPolicy policy, SsrfGuardProperties props) {
+        // ssrf.guard.llm.scan-embedded=true additionally validates URLs
+        // buried mid-sentence inside tool-input strings.
+        var guard = new kr.devslab.ssrfguard.llm.JsonToolInputGuard(
+                policy, false, props.getLlm().isScanEmbedded());
         return new BeanPostProcessor() {
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) {
                 if (bean instanceof ToolCallback cb && !(bean instanceof SsrfGuardedToolCallback)) {
-                    return new SsrfGuardedToolCallback(cb, policy);
+                    return new SsrfGuardedToolCallback(cb, guard);
                 }
                 return bean;
             }

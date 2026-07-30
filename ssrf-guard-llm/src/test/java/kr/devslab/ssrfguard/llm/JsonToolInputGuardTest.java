@@ -123,4 +123,115 @@ class JsonToolInputGuardTest {
         assertThat(guard.checkOrFormatError("{\"to\":\"mailto:user@example.com\"}")).isNull();
         assertThat(guard.checkOrFormatError("{\"id\":\"urn:uuid:abc\"}")).isNull();
     }
+
+    @Test
+    void validates_whole_string_url_despite_surrounding_whitespace() {
+        // " http://10.0.0.5/ " — looksLikeUrl() tolerates the whitespace but
+        // java.net.URI does not; the candidate must be trimmed before parsing
+        // or the URL skips validation entirely.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+        String err = guard.checkOrFormatError("{\"url\":\" http://10.0.0.5/ \"}");
+        assertThat(err).contains("\"error\":\"ssrf_blocked\"");
+    }
+
+    @Test
+    void validates_url_whose_path_has_uri_illegal_characters() {
+        // '[' is fine for browsers/HTTP clients but java.net.URI throws on
+        // it. The parse retry drops the path and validates scheme://authority,
+        // so illegal path characters can't smuggle a URL past the policy.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+        String err = guard.checkOrFormatError("{\"url\":\"http://10.0.0.5/a[0]\"}");
+        assertThat(err).contains("\"error\":\"ssrf_blocked\"");
+
+        assertThat(guard.checkOrFormatError("{\"url\":\"https://api.example.com/a[0]\"}")).isNull();
+    }
+
+    // --- scanEmbedded ------------------------------------------------------
+
+    @Test
+    void default_guard_does_not_scan_embedded_urls() {
+        // Documents the opt-in: without scanEmbedded, mid-sentence URLs pass.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+        assertThat(guard.checkOrFormatError(
+                "{\"prompt\":\"summarize http://169.254.169.254/latest/meta-data/ please\"}")).isNull();
+    }
+
+    @Test
+    void scan_embedded_blocks_mid_sentence_url() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        String err = guard.checkOrFormatError(
+                "{\"prompt\":\"summarize http://169.254.169.254/latest/meta-data/ please\"}");
+        assertThat(err)
+                .isNotNull()
+                .contains("\"error\":\"ssrf_blocked\"")
+                .contains("\"reason\":\"blocked_ip_literal\"");
+    }
+
+    @Test
+    void scan_embedded_still_flags_whole_string_urls() {
+        // Strictly additive over the base scanner.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        assertThat(guard.checkOrFormatError("{\"url\":\"https://evil.com/\"}"))
+                .contains("\"error\":\"ssrf_blocked\"");
+        assertThat(guard.checkOrFormatError("{\"url\":\"https://api.example.com/v1\"}")).isNull();
+    }
+
+    @Test
+    void scan_embedded_allows_allowlisted_mid_sentence_url() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        assertThat(guard.checkOrFormatError(
+                "{\"prompt\":\"compare https://api.example.com/a and https://api.example.com/b\"}")).isNull();
+    }
+
+    @Test
+    void scan_embedded_trims_trailing_prose_punctuation() {
+        // "…api.example.com." — the sentence's full stop is not part of the
+        // host; without trimming, the trailing dot would fail the host
+        // allowlist and false-positive.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        assertThat(guard.checkOrFormatError(
+                "{\"prompt\":\"read https://api.example.com.\"}")).isNull();
+
+        String err = guard.checkOrFormatError("{\"prompt\":\"read https://evil.com/x.\"}");
+        assertThat(err).contains("\"url\":\"https://evil.com/x\"");
+    }
+
+    @Test
+    void scan_embedded_keeps_balanced_parentheses_trims_unbalanced() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        // Wiki-style balanced parens survive intact.
+        assertThat(guard.checkOrFormatError(
+                "{\"prompt\":\"see https://api.example.com/wiki/Foo_(bar) for details\"}")).isNull();
+        // A closing paren from the surrounding sentence is trimmed.
+        String err = guard.checkOrFormatError("{\"prompt\":\"(see https://evil.com/x)\"}");
+        assertThat(err).contains("\"url\":\"https://evil.com/x\"");
+    }
+
+    @Test
+    void scan_embedded_catches_url_glued_to_preceding_text() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        String err = guard.checkOrFormatError("{\"prompt\":\"visit seehttp://evil.com now\"}");
+        assertThat(err).contains("\"error\":\"ssrf_blocked\"");
+    }
+
+    @Test
+    void scan_embedded_stops_at_quotes_and_angle_brackets() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        String err = guard.checkOrFormatError("{\"note\":\"link: <https://evil.com/x> in markup\"}");
+        assertThat(err).contains("\"url\":\"https://evil.com/x\"");
+    }
+
+    @Test
+    void scan_embedded_catches_uppercase_scheme_mid_sentence() {
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")), false, true);
+        String err = guard.checkOrFormatError(
+                "{\"prompt\":\"fetch HTTP://169.254.169.254/latest/ now\"}");
+        assertThat(err).contains("\"reason\":\"blocked_ip_literal\"");
+    }
+
+    @Test
+    void scan_embedded_accessor_reflects_flag() {
+        assertThat(new JsonToolInputGuard(policy(List.of())).scanEmbedded()).isFalse();
+        assertThat(new JsonToolInputGuard(policy(List.of()), false, true).scanEmbedded()).isTrue();
+    }
 }

@@ -101,6 +101,7 @@ Two additional toggles control automatic wrapping of LLM tool beans. Both defaul
 |---|---|---|
 | `ssrf.guard.springai.wrap-tool-callbacks` | `true` | Wraps every Spring AI `ToolCallback` bean. Requires `ssrf-guard-springai` on the classpath. |
 | `ssrf.guard.langchain4j.wrap-tool-executors` | `true` | Wraps every LangChain4j `ToolExecutor` bean. Requires `ssrf-guard-langchain4j` on the classpath. |
+| `ssrf.guard.llm.scan-embedded` | `false` | Also scan for `http(s)://` URLs buried **mid-sentence** inside tool-input strings (`"summarize http://169.254.169.254/ please"`) — the shape a prompt-injected instruction typically takes. By default only strings whose whole value is a URL are validated. Strictly additive but deliberately aggressive: URL-shaped text inside prose or code snippets is validated too, so non-allowlisted hosts there count as violations. Trailing prose punctuation is trimmed; balanced parentheses in paths (`/wiki/Foo_(bar)`) survive. |
 
 ```yaml
 ssrf:
@@ -112,4 +113,13 @@ ssrf:
       wrap-tool-callbacks: true     # default
     langchain4j:
       wrap-tool-executors: true     # default
+    llm:
+      scan-embedded: false          # default; true = catch mid-sentence URLs too
+```
+
+For manual (non-auto-wrap) use, pass the flag through `JsonToolInputGuard` directly:
+
+```java
+var guard = new JsonToolInputGuard(policy, /* throwOnViolation */ false, /* scanEmbedded */ true);
+var safe = new SsrfGuardedToolCallback(rawCallback, guard);   // or SsrfGuardedToolExecutor
 ```

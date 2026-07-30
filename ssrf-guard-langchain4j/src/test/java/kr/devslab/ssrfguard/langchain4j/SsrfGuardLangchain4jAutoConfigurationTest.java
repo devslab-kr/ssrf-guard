@@ -97,6 +97,42 @@ class SsrfGuardLangchain4jAutoConfigurationTest {
     @TestPropertySource(properties = {
             "ssrf.guard.enabled=true",
             "ssrf.guard.exact-hosts=api.example.com",
+            "ssrf.guard.llm.scan-embedded=true"
+    })
+    class WhenScanEmbeddedEnabled {
+
+        @Autowired ToolExecutor injectedExecutor;
+
+        @Test
+        void wrapped_executor_blocks_mid_sentence_url() {
+            String result = injectedExecutor.execute(
+                    ToolExecutionRequest.builder()
+                            .name("fetch_url")
+                            .arguments("{\"prompt\":\"summarize http://169.254.169.254/latest/ please\"}")
+                            .build(),
+                    null);
+            assertThat(result)
+                    .as("scan-embedded=true should catch URLs buried mid-sentence")
+                    .contains("\"error\":\"ssrf_blocked\"");
+        }
+
+        @Test
+        void wrapped_executor_allows_allowlisted_mid_sentence_url() {
+            String result = injectedExecutor.execute(
+                    ToolExecutionRequest.builder()
+                            .name("fetch_url")
+                            .arguments("{\"prompt\":\"read https://api.example.com/docs please\"}")
+                            .build(),
+                    null);
+            assertThat(result).startsWith("PRETEND-FETCHED");
+        }
+    }
+
+    @Nested
+    @SpringBootTest(classes = TestApp.class)
+    @TestPropertySource(properties = {
+            "ssrf.guard.enabled=true",
+            "ssrf.guard.exact-hosts=api.example.com",
             "ssrf.guard.langchain4j.wrap-tool-executors=false"
     })
     class WhenAutoWrapDisabled {

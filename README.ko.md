@@ -79,6 +79,8 @@ ToolCallback[] safe = SsrfGuardedToolCallbacks.wrap(raw, urlPolicy);
 
 자동 설정으로 — 모든 `@Bean ToolCallback`이 `BeanPostProcessor`로 자동 wrap.
 
+기본값으로는 툴 입력 문자열 전체가 URL인 경우만 검증합니다. `ssrf.guard.llm.scan-embedded=true`를 설정하면 문장 중간에 묻힌 URL(`"summarize http://169.254.169.254/ please"`)까지 탐지 — 프롬프트 인젝션 지시문이 취하는 전형적인 형태입니다. 트레이드오프는 [설정 가이드](https://ssrf-guard.devslab.kr/ko/guides/configuration/) 참고.
+
 ## 설치
 
 ### Maven

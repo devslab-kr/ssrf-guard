@@ -102,4 +102,27 @@ public class SsrfGuardProperties {
      * {@code 169.254.169.254}. Default: true.
      */
     private boolean followRedirects = true;
+
+    /**
+     * Options for the LLM tool-input guard ({@code ssrf-guard-llm} and the
+     * {@code -springai} / {@code -langchain4j} adapters). Ignored by the
+     * plain HTTP-client modules.
+     */
+    private final Llm llm = new Llm();
+
+    @Data
+    public static class Llm {
+
+        /**
+         * Also scan for {@code http(s)://} URLs embedded mid-sentence inside
+         * tool-input strings ("summarize http://169.254.169.254/ please") —
+         * the shape a prompt-injected instruction typically takes. By default
+         * only strings whose whole value is a URL are validated. Embedded
+         * scanning is strictly additive but deliberately aggressive:
+         * URL-shaped text inside prose or code snippets is validated against
+         * the policy, so non-allowlisted hosts there count as violations.
+         * Default: false.
+         */
+        private boolean scanEmbedded = false;
+    }
 }
