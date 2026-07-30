@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [3.2.0] — scanEmbedded: mid-sentence URL scanning for the LLM tool-input guard
+
 ### Added
 
 - **`scanEmbedded` — mid-sentence URL scanning for the LLM tool-input guard.** `JsonToolInputGuard` gains an opt-in third constructor argument (and the adapters a matching `ssrf.guard.llm.scan-embedded` property, default `false`) that extracts and validates `http(s)://` URLs buried mid-sentence inside tool-input strings (`"summarize http://169.254.169.254/ please"`) — the shape a prompt-injected instruction typically takes. Strictly additive over the whole-string scanner; trailing prose punctuation is trimmed, balanced parentheses in paths (`/wiki/Foo_(bar)`) survive, and a URL glued to preceding text (`seehttp://evil.com`) is still caught. Default behavior unchanged. Ported from the JS sibling [`@devslab/ssrf-guard-js` 0.5.0](https://github.com/devslab-kr/ssrf-guard-js), where the option originated from AskLinq integration feedback.
@@ -13,6 +15,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 ### Security
 
 - **Tool-input URLs that `java.net.URI` cannot parse no longer skip validation.** Two collection-time gaps fixed in `JsonToolInputGuard`: (1) a whole-string URL with surrounding whitespace (`" http://10.0.0.5/ "`) passed the prefix test but failed `URI` parsing and was silently skipped — candidates are now trimmed before parsing; (2) a URL whose path contains characters browsers send unencoded but `java.net.URI` rejects (`http://10.0.0.5/a[0]`) also parse-failed and skipped validation — the guard now retries with everything after the authority dropped, since the policy only judges `scheme://authority`. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
+
+### Migration
+
+Drop in v3.2.0 — no consumer code changes; `scanEmbedded` is off by default, so existing behavior is unchanged until you opt in via `ssrf.guard.llm.scan-embedded=true` (auto-wrap) or the new three-argument `JsonToolInputGuard` constructor (manual wiring). The two parse-time validation-skip fixes apply unconditionally — if a tool input previously passed the guard only because its URL was unparseable, it is now validated.
 
 ## [3.1.1] — Fix uppercase-scheme bypass in the LLM tool-input guard
 
