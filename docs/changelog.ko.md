@@ -6,6 +6,8 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
+## [3.2.0] — scanEmbedded: LLM 툴 입력 가드의 문장 중간 URL 탐지
+
 ### Added
 
 - **`scanEmbedded` — LLM 툴 입력 가드의 문장 중간 URL 탐지.** `JsonToolInputGuard`에 opt-in 세 번째 생성자 인자 추가 (어댑터에는 대응 프로퍼티 `ssrf.guard.llm.scan-embedded`, 기본 `false`) — 툴 입력 문자열 안에 문장 중간으로 묻힌 `http(s)://` URL(`"summarize http://169.254.169.254/ please"`)을 추출·검증. 프롬프트 인젝션 지시문이 취하는 전형적인 형태입니다. 기존 whole-string 스캐너에 순수 추가되며, 꼬리에 붙은 문장부호는 제거, 경로의 균형 잡힌 괄호(`/wiki/Foo_(bar)`)는 보존, 앞 텍스트에 붙은 URL(`seehttp://evil.com`)도 탐지. 기본 동작 변경 없음. JS 자매 라이브러리 [`@devslab/ssrf-guard-js` 0.5.0](https://github.com/devslab-kr/ssrf-guard-js)에서 포팅 — AskLinq 통합 피드백에서 나온 옵션입니다.
@@ -13,6 +15,10 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 ### Security
 
 - **`java.net.URI`가 파싱하지 못하는 툴 입력 URL이 검증을 건너뛰지 않도록 수정.** `JsonToolInputGuard`의 수집 단계 공백 두 개 수정: (1) 앞뒤 공백이 있는 whole-string URL(`" http://10.0.0.5/ "`)이 접두사 검사는 통과하지만 `URI` 파싱에 실패해 조용히 건너뛰어짐 — 이제 파싱 전에 trim; (2) 브라우저는 인코딩 없이 보내지만 `java.net.URI`는 거부하는 문자가 경로에 있는 URL(`http://10.0.0.5/a[0]`)도 파싱 실패로 검증을 건너뜀 — 정책은 `scheme://authority`만 판단하므로 authority 이후를 잘라내고 재시도. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
+
+### Migration
+
+v3.2.0으로 그대로 교체 — 소비자 코드 변경 없음. `scanEmbedded`는 기본 off라 `ssrf.guard.llm.scan-embedded=true`(자동 wrap) 또는 새 3-인자 `JsonToolInputGuard` 생성자(수동 배선)로 opt-in하기 전까지 기존 동작 그대로입니다. 파싱 시점 검증 누락 수정 2건은 무조건 적용 — URL이 파싱 불가라는 이유만으로 가드를 통과하던 툴 입력이 있었다면 이제 검증됩니다.
 
 ## [3.1.1] — LLM 툴 입력 가드의 대문자 스킴 우회 수정
 

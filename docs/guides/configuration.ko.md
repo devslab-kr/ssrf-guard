@@ -101,7 +101,7 @@ LLM 툴 빈 자동 wrap을 제어하는 두 토글. 둘 다 기본 `true` — �
 |---|---|---|
 | `ssrf.guard.springai.wrap-tool-callbacks` | `true` | Spring AI 모든 `ToolCallback` 빈 자동 wrap. `ssrf-guard-springai` classpath 필요. |
 | `ssrf.guard.langchain4j.wrap-tool-executors` | `true` | LangChain4j 모든 `ToolExecutor` 빈 자동 wrap. `ssrf-guard-langchain4j` classpath 필요. |
-| `ssrf.guard.llm.scan-embedded` | `false` | 툴 입력 문자열 안에 **문장 중간**으로 묻힌 `http(s)://` URL(`"summarize http://169.254.169.254/ please"`)까지 추출·검증 — 프롬프트 인젝션 지시문이 취하는 전형적인 형태. 기본은 문자열 전체가 URL인 경우만 검증. 기존 탐지에 순수 추가되지만 의도적으로 공격적: prose나 코드 스니펫 속 URL 모양 텍스트도 정책 검증 대상이라, allowlist 밖 호스트는 위반으로 처리됨. 꼬리에 붙은 문장부호는 제거, 경로의 균형 잡힌 괄호(`/wiki/Foo_(bar)`)는 보존. |
+| `ssrf.guard.llm.scan-embedded` | `false` | **(v3.2+)** 툴 입력 문자열 안에 **문장 중간**으로 묻힌 `http(s)://` URL(`"summarize http://169.254.169.254/ please"`)까지 추출·검증 — 프롬프트 인젝션 지시문이 취하는 전형적인 형태. 기본은 문자열 전체가 URL인 경우만 검증. 기존 탐지에 순수 추가되지만 의도적으로 공격적: prose나 코드 스니펫 속 URL 모양 텍스트도 정책 검증 대상이라, allowlist 밖 호스트는 위반으로 처리됨. 꼬리에 붙은 문장부호는 제거, 경로의 균형 잡힌 괄호(`/wiki/Foo_(bar)`)는 보존. |
 
 ```yaml
 ssrf:

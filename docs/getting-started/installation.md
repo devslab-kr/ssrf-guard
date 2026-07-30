@@ -17,7 +17,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -29,7 +29,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-resttemplate</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -41,7 +41,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-webclient</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -53,7 +53,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-feign</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -65,7 +65,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-springai</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -77,7 +77,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-langchain4j</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -89,7 +89,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-llm</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -108,7 +108,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-jdkhttp</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -123,7 +123,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     <dependency>
         <groupId>kr.devslab</groupId>
         <artifactId>ssrf-guard-okhttp</artifactId>
-        <version>3.1.1</version>
+        <version>3.2.0</version>
     </dependency>
     ```
 
@@ -135,7 +135,7 @@ ssrf-guard 3.0+ is split along HTTP-client boundaries — pick the module(s) mat
     ```
 
 !!! tip "Latest version"
-    Replace `3.1.1` with the latest from [Maven Central](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard).
+    Replace `3.2.0` with the latest from [Maven Central](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard).
 
 !!! info "Coming from v2.0.0?"
     The `kr.devslab:ssrf-guard` coordinate still works — it's a meta artifact that pulls in `-core`, `-httpclient5`, and `-restclient`. Most consumers can upgrade by changing the version and rebuilding. Direct imports of `kr.devslab.ssrfguard.security.*` need to be updated — see the [v3.0.0 changelog](../changelog.md#300--multi-module--llm-agent-ssrf-defense) for the package-rename mapping.
