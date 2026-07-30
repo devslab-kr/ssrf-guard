@@ -7,6 +7,14 @@ The source of truth for the entries below is [docs/changelog.md](docs/changelog.
 
 ## [Unreleased]
 
+### Added
+
+- **`scanEmbedded` — mid-sentence URL scanning for the LLM tool-input guard.** Opt-in via a new `JsonToolInputGuard` constructor argument or `ssrf.guard.llm.scan-embedded` (default `false`): URLs buried mid-sentence inside tool-input strings (`"summarize http://169.254.169.254/ please"`) are extracted and validated. Ported from `@devslab/ssrf-guard-js` 0.5.0. Default behavior unchanged.
+
+### Security
+
+- **Tool-input URLs that `java.net.URI` cannot parse no longer skip validation.** Whole-string URLs with surrounding whitespace are trimmed before parsing, and URLs whose path contains `URI`-illegal characters (`/a[0]`) are re-validated on `scheme://authority` alone instead of being silently skipped. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
+
 ## [3.1.1] — Fix uppercase-scheme bypass in the LLM tool-input guard
 
 ### Security

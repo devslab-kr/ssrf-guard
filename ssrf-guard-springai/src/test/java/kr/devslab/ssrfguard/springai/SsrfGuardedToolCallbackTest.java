@@ -136,6 +136,18 @@ class SsrfGuardedToolCallbackTest {
     }
 
     @Test
+    void custom_guard_with_scan_embedded_blocks_mid_sentence_url() {
+        FakeFetchUrlTool tool = new FakeFetchUrlTool();
+        SsrfGuardedToolCallback safe = new SsrfGuardedToolCallback(
+                tool, new kr.devslab.ssrfguard.llm.JsonToolInputGuard(
+                        policy(List.of("api.example.com")), false, true));
+        String result = safe.call(
+                "{\"prompt\":\"summarize http://169.254.169.254/latest/ please\"}");
+        assertThat(result).contains("\"error\":\"ssrf_blocked\"");
+        assertThat(tool.callCount).hasValue(0);
+    }
+
+    @Test
     void delegates_definition_and_metadata() {
         FakeFetchUrlTool tool = new FakeFetchUrlTool();
         SsrfGuardedToolCallback safe = new SsrfGuardedToolCallback(tool, policy(List.of("api.example.com")));

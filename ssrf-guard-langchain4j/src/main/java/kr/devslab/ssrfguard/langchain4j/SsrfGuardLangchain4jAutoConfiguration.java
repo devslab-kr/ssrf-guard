@@ -76,12 +76,16 @@ public class SsrfGuardLangchain4jAutoConfiguration {
     @Bean
     @ConditionalOnProperty(prefix = "ssrf.guard.langchain4j", name = "wrap-tool-executors",
             havingValue = "true", matchIfMissing = true)
-    BeanPostProcessor ssrfGuardToolExecutorBeanPostProcessor(UrlPolicy policy) {
+    BeanPostProcessor ssrfGuardToolExecutorBeanPostProcessor(UrlPolicy policy, SsrfGuardProperties props) {
+        // ssrf.guard.llm.scan-embedded=true additionally validates URLs
+        // buried mid-sentence inside tool-input strings.
+        var guard = new kr.devslab.ssrfguard.llm.JsonToolInputGuard(
+                policy, false, props.getLlm().isScanEmbedded());
         return new BeanPostProcessor() {
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) {
                 if (bean instanceof ToolExecutor exec && !(bean instanceof SsrfGuardedToolExecutor)) {
-                    return new SsrfGuardedToolExecutor(exec, policy);
+                    return new SsrfGuardedToolExecutor(exec, guard);
                 }
                 return bean;
             }

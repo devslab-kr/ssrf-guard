@@ -12,6 +12,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Default {@link ToolInputGuard}. Treats the tool input as a JSON object,
@@ -40,6 +42,17 @@ import java.util.Map;
  * its next turn and can recover gracefully ("I can't fetch that URL").
  * Set {@code throwOnViolation = true} for CI / test contexts that want a
  * thrown {@link SsrfGuardException} instead.
+ *
+ * <h2>Embedded URL scanning ({@code scanEmbedded})</h2>
+ * By default only strings whose whole (trimmed) value is an
+ * {@code http(s)://} URL are collected. A URL buried mid-sentence
+ * ("summarize http://169.254.169.254/ please") — the shape a
+ * prompt-injected instruction typically takes — is not. Opt in with
+ * {@code scanEmbedded = true} to also extract and validate URLs embedded
+ * anywhere inside argument strings. Strictly additive: everything the
+ * base scanner flags stays flagged. Deliberately aggressive: URL-shaped
+ * text inside prose or code snippets is validated against the policy, so
+ * non-allowlisted hosts there count as violations.
  */
 public final class JsonToolInputGuard implements ToolInputGuard {
 
@@ -48,14 +61,25 @@ public final class JsonToolInputGuard implements ToolInputGuard {
 
     private final UrlPolicy policy;
     private final boolean throwOnViolation;
+    private final boolean scanEmbedded;
 
     public JsonToolInputGuard(UrlPolicy policy) {
         this(policy, false);
     }
 
     public JsonToolInputGuard(UrlPolicy policy, boolean throwOnViolation) {
+        this(policy, throwOnViolation, false);
+    }
+
+    /**
+     * @param scanEmbedded when {@code true}, also scan for {@code http(s)://}
+     *                     URLs embedded mid-sentence inside argument strings
+     *                     (see class javadoc). Default: {@code false}.
+     */
+    public JsonToolInputGuard(UrlPolicy policy, boolean throwOnViolation, boolean scanEmbedded) {
         this.policy = policy;
         this.throwOnViolation = throwOnViolation;
+        this.scanEmbedded = scanEmbedded;
     }
 
     /**
@@ -92,14 +116,10 @@ public final class JsonToolInputGuard implements ToolInputGuard {
             return null;
         }
 
-        List<String> urls = collectUrlLikeStrings(root);
+        List<String> urls = collectUrlLikeStrings(root, scanEmbedded);
         for (String url : urls) {
-            URI uri;
-            try {
-                uri = new URI(url);
-            } catch (URISyntaxException ignored) {
-                continue;
-            }
+            URI uri = parseForValidation(url);
+            if (uri == null) continue;
             String scheme = uri.getScheme();
             if (scheme == null) continue;
             // Only http/https. file://, gopher://, etc. would be rejected by
@@ -117,21 +137,56 @@ public final class JsonToolInputGuard implements ToolInputGuard {
         return null;
     }
 
-    private static List<String> collectUrlLikeStrings(JsonNode node) {
+    /**
+     * {@code java.net.URI} rejects characters browsers and HTTP clients
+     * happily send unencoded ({@code [}, {@code {}, ...). A parse failure
+     * must not let the URL skip validation: the policy only judges
+     * {@code scheme://authority}, so retry with everything after the
+     * authority dropped. Returns {@code null} only when even the authority
+     * is unparseable — {@link UrlPolicy} rejects null/empty hosts anyway,
+     * so nothing resolvable slips through.
+     */
+    private static URI parseForValidation(String url) {
+        try {
+            return new URI(url);
+        } catch (URISyntaxException firstFailure) {
+            int schemeEnd = url.indexOf("://");
+            if (schemeEnd < 0) return null;
+            int authorityEnd = url.length();
+            for (int i = schemeEnd + 3; i < url.length(); i++) {
+                char c = url.charAt(i);
+                if (c == '/' || c == '?' || c == '#') {
+                    authorityEnd = i;
+                    break;
+                }
+            }
+            try {
+                return new URI(url.substring(0, authorityEnd));
+            } catch (URISyntaxException ignored) {
+                return null;
+            }
+        }
+    }
+
+    private static List<String> collectUrlLikeStrings(JsonNode node, boolean scanEmbedded) {
         List<String> out = new ArrayList<>();
-        collectUrlLikeStrings(node, out);
+        collectUrlLikeStrings(node, out, scanEmbedded);
         return out;
     }
 
-    private static void collectUrlLikeStrings(JsonNode node, List<String> out) {
+    private static void collectUrlLikeStrings(JsonNode node, List<String> out, boolean scanEmbedded) {
         if (node == null) return;
         if (node.isTextual()) {
             String v = node.asText();
-            if (looksLikeUrl(v)) out.add(v);
+            // Trimmed — looksLikeUrl() tolerates surrounding whitespace, and
+            // an untrimmed " http://…" would fail URI parsing and skip
+            // validation entirely.
+            if (looksLikeUrl(v)) out.add(v.trim());
+            if (scanEmbedded) collectEmbedded(v, out);
             return;
         }
         if (node.isArray()) {
-            for (JsonNode child : node) collectUrlLikeStrings(child, out);
+            for (JsonNode child : node) collectUrlLikeStrings(child, out, scanEmbedded);
             return;
         }
         if (node.isObject()) {
@@ -139,9 +194,61 @@ public final class JsonToolInputGuard implements ToolInputGuard {
             // Set<Map.Entry<String,JsonNode>>. Iterate the values directly.
             for (JsonNode child : node.properties().stream()
                     .map(Map.Entry::getValue).toList()) {
-                collectUrlLikeStrings(child, out);
+                collectUrlLikeStrings(child, out, scanEmbedded);
             }
         }
+    }
+
+    // An embedded http(s) URL can start anywhere in the string — even glued
+    // to preceding text ("seehttp://evil.example") — and runs to the first
+    // whitespace/quote/angle-bracket. Prose punctuation stuck to the tail
+    // ("….com/docs.", "(…)") is trimmed afterwards by trimEmbeddedTail.
+    private static final Pattern EMBEDDED_HTTP_URL =
+            Pattern.compile("https?://[^\\s\"'`<>]+", Pattern.CASE_INSENSITIVE);
+
+    private static void collectEmbedded(String value, List<String> out) {
+        Matcher m = EMBEDDED_HTTP_URL.matcher(value);
+        while (m.find()) {
+            out.add(trimEmbeddedTail(m.group()));
+        }
+    }
+
+    private static final String TRAILING_PROSE_PUNCTUATION = ".,;:!?'\"`";
+
+    // "see https://evil.example/x)." — the sentence's punctuation is not
+    // part of the URL. Closing brackets are only trimmed when unbalanced, so
+    // "https://en.example.org/wiki/Foo_(bar)" survives intact. Host-level
+    // policy decisions are unaffected either way — only the path can lose
+    // characters here.
+    private static String trimEmbeddedTail(String candidate) {
+        String out = candidate;
+        while (!out.isEmpty()) {
+            char last = out.charAt(out.length() - 1);
+            if (TRAILING_PROSE_PUNCTUATION.indexOf(last) >= 0) {
+                out = out.substring(0, out.length() - 1);
+                continue;
+            }
+            char opener = switch (last) {
+                case ')' -> '(';
+                case ']' -> '[';
+                case '}' -> '{';
+                default -> '\0';
+            };
+            if (opener != '\0' && countChar(out, opener) < countChar(out, last)) {
+                out = out.substring(0, out.length() - 1);
+                continue;
+            }
+            break;
+        }
+        return out;
+    }
+
+    private static int countChar(String value, char c) {
+        int n = 0;
+        for (int i = 0; i < value.length(); i++) {
+            if (value.charAt(i) == c) n++;
+        }
+        return n;
     }
 
     private static boolean looksLikeUrl(String s) {
@@ -174,5 +281,9 @@ public final class JsonToolInputGuard implements ToolInputGuard {
 
     public boolean throwOnViolation() {
         return throwOnViolation;
+    }
+
+    public boolean scanEmbedded() {
+        return scanEmbedded;
     }
 }

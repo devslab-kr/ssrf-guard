@@ -79,6 +79,8 @@ ToolCallback[] safe = SsrfGuardedToolCallbacks.wrap(raw, urlPolicy);
 
 Auto-config picks it up — any `@Bean ToolCallback` gets wrapped via a `BeanPostProcessor`.
 
+By default only tool-input strings whose whole value is a URL are validated. Set `ssrf.guard.llm.scan-embedded=true` to also catch URLs buried mid-sentence (`"summarize http://169.254.169.254/ please"`) — the shape a prompt-injected instruction typically takes. See the [configuration guide](https://ssrf-guard.devslab.kr/guides/configuration/) for the trade-off.
+
 ## Install
 
 ### Maven
