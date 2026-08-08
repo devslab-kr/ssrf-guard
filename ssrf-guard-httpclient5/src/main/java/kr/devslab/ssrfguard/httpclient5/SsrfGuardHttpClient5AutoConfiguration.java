@@ -1,6 +1,7 @@
 package kr.devslab.ssrfguard.httpclient5;
 
 import kr.devslab.ssrfguard.core.HostPolicy;
+import kr.devslab.ssrfguard.core.UrlPolicy;
 import kr.devslab.ssrfguard.core.NoOpSsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardMetrics;
 import kr.devslab.ssrfguard.core.SsrfGuardProperties;
@@ -51,9 +52,25 @@ public class SsrfGuardHttpClient5AutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    UrlPolicy ssrfUrlPolicy(HostPolicy hostPolicy,
+                            SsrfGuardProperties props,
+                            ObjectProvider<SsrfGuardMetrics> metrics) {
+        return new UrlPolicy(
+                props.getAllowedSchemes(),
+                props.getAllowedPorts(),
+                hostPolicy,
+                props.isRejectIpLiteralHosts(),
+                props.isRejectUserInfo(),
+                metrics.getIfAvailable(() -> NoOpSsrfGuardMetrics.INSTANCE)
+        );
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     CloseableHttpClient ssrfHttpClient(SafeDnsResolver dns,
                                        SsrfGuardProperties props,
-                                       ObjectProvider<SsrfGuardMetrics> metrics) {
+                                       ObjectProvider<SsrfGuardMetrics> metrics,
+                                       UrlPolicy policy) {
         var builder = HttpClients.custom()
                 .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
                         .setDnsResolver(dns)
@@ -64,7 +81,8 @@ public class SsrfGuardHttpClient5AutoConfiguration {
             builder.setRedirectStrategy(new SafeRedirectStrategy(
                     dns,
                     props.getAllowedSchemes(),
-                    metrics.getIfAvailable(() -> NoOpSsrfGuardMetrics.INSTANCE)
+                    metrics.getIfAvailable(() -> NoOpSsrfGuardMetrics.INSTANCE),
+                    policy
             ));
         } else {
             builder.disableRedirectHandling();

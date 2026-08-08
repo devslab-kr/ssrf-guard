@@ -1,6 +1,9 @@
 package kr.devslab.ssrfguard.httpclient5;
 
 import kr.devslab.ssrfguard.core.BlockReason;
+import kr.devslab.ssrfguard.core.RedirectGuard;
+import kr.devslab.ssrfguard.core.SsrfGuardException;
+import kr.devslab.ssrfguard.core.UrlPolicy;
 import kr.devslab.ssrfguard.core.SsrfGuardMetrics;
 import org.apache.hc.client5.http.RedirectException;
 import org.apache.hc.client5.http.impl.DefaultRedirectStrategy;
@@ -36,11 +39,31 @@ public final class SafeRedirectStrategy implements RedirectStrategy {
     private final SafeDnsResolver dnsResolver;
     private final Iterable<String> allowedSchemes;
     private final SsrfGuardMetrics metrics;
+    private final UrlPolicy policy;
 
-    public SafeRedirectStrategy(SafeDnsResolver dnsResolver, Iterable<String> allowedSchemes, SsrfGuardMetrics metrics) {
+    /**
+     * @param policy the same policy the first request is validated with. When
+     *               {@code null} the hop falls back to the pre-3.2.0
+     *               scheme-only check — kept so the older three-argument
+     *               constructor keeps compiling, not because it is a good
+     *               idea.
+     */
+    public SafeRedirectStrategy(SafeDnsResolver dnsResolver, Iterable<String> allowedSchemes,
+                                SsrfGuardMetrics metrics, UrlPolicy policy) {
         this.dnsResolver = dnsResolver;
         this.allowedSchemes = allowedSchemes;
         this.metrics = metrics;
+        this.policy = policy;
+    }
+
+    /**
+     * @deprecated pass the {@link UrlPolicy} so redirect hops get the same
+     *             checks as the first request. Without it, port, userinfo and
+     *             IP-literal rules are not re-applied on a hop.
+     */
+    @Deprecated(since = "3.2.0")
+    public SafeRedirectStrategy(SafeDnsResolver dnsResolver, Iterable<String> allowedSchemes, SsrfGuardMetrics metrics) {
+        this(dnsResolver, allowedSchemes, metrics, null);
     }
 
     @Override
@@ -58,21 +81,38 @@ public final class SafeRedirectStrategy implements RedirectStrategy {
         }
 
         String scheme = location.getScheme();
-        boolean schemeAllowed = false;
-        if (scheme != null) {
-            for (String s : allowedSchemes) {
-                if (s.equalsIgnoreCase(scheme)) {
-                    schemeAllowed = true;
-                    break;
+        String host = location.getHost();
+
+        // The FULL policy, via the shared core seam — scheme, host, port,
+        // userinfo and IP-literal, exactly what the first request got. This
+        // used to check the scheme alone and leave the rest to the resolver,
+        // so a hop to an allowlisted host on a blocked port, or to a public
+        // IP literal, was followed. See RedirectGuard for why the decision
+        // lives in core rather than here.
+        if (policy != null) {
+            try {
+                RedirectGuard.validateHop(policy, location);
+            } catch (SsrfGuardException e) {
+                // UrlPolicy already recorded the metric and logged the rule.
+                throw new RedirectException(e.getMessage());
+            }
+        } else {
+            // Deprecated constructor path: scheme only, as before 3.2.0.
+            boolean schemeAllowed = false;
+            if (scheme != null) {
+                for (String s : allowedSchemes) {
+                    if (s.equalsIgnoreCase(scheme)) {
+                        schemeAllowed = true;
+                        break;
+                    }
                 }
             }
-        }
-        if (!schemeAllowed) {
-            recordBlocked(BlockReason.BLOCKED_REDIRECT, scheme, location.getHost());
-            throw new RedirectException("Blocked redirect scheme: " + scheme);
+            if (!schemeAllowed) {
+                recordBlocked(BlockReason.BLOCKED_REDIRECT, scheme, location.getHost());
+                throw new RedirectException("Blocked redirect scheme: " + scheme);
+            }
         }
 
-        String host = location.getHost();
         if (host == null) {
             recordBlocked(BlockReason.BLOCKED_REDIRECT, scheme, null);
             throw new RedirectException("Blocked redirect: empty host");

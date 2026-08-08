@@ -14,6 +14,16 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ### Security
 
+- **리다이렉트 홉이 첫 요청과 동일한 검사를 받습니다.** 이전에는 어댑터마다 홉에서 무엇을 재검증할지 즉흥적으로 정했고, 서로 달랐습니다: `httpclient5`는 스킴 재검사 + DNS 재실행만 하고 포트·userinfo·IP-리터럴은 안 봤고, `jdkhttp`는 **아무것도** 안 했습니다(JDK 클라이언트가 내부에서 리다이렉트를 따라가고 훅을 주지 않기 때문). 허용된 호스트에서 튕겨 나가는 리다이렉트야말로 SSRF의 실제 형태라, 첫 요청보다 약한 검사를 받는 홉은 단계만 늘어난 구멍입니다.
+
+    코어에 신설한 `RedirectGuard`가 홉이 통과해야 할 것의 **단일 정의**입니다 — `UrlPolicy` 전체를 적용하고 `blocked_redirect`로 다시 던집니다. 루프 자체는 JS 자매처럼 코어로 옮길 수 없습니다(JVM에서는 각 클라이언트가 자기 루프를 소유). 옮길 수 있고 옮겨야 하는 건 **결정**입니다.
+
+    `SsrfGuardedHttpClient`(jdkhttp)가 이제 리다이렉트를 직접 따라가며 재검증합니다. fetch 스펙 시맨틱을 따르며 JS 자매와 동일합니다: `303`(및 `POST`의 `301`/`302`)은 `GET`으로 강등하고 본문을 버리며, 홉이 origin을 넘으면 자격증명 헤더를 제거하고, `maxRedirects`(기본 5)가 체인을 묶습니다. **`HttpClient.Redirect.NEVER`로 만든 delegate를 요구**하며 아니면 `IllegalArgumentException`을 던집니다 — 내부에서 리다이렉트를 따라가는 delegate는 모든 홉에서 정책을 우회시키고, 조용히 아무것도 안 하는 가드보다 시끄럽게 실패하는 편이 낫습니다.
+
+    `SafeRedirectStrategy`(httpclient5)는 `UrlPolicy`를 받아 같은 이음매를 호출합니다. 3인자 생성자는 deprecated이며 3.2.0 이전의 스킴 전용 동작을 유지해 기존 코드가 그대로 컴파일됩니다.
+
+    첫 JVM ↔ JS 정합성 감사에서 발견됐습니다. **OkHttp는 이번 변경 범위 밖입니다** — `Dns` 계층이 홉마다 호스트 허용 목록과 사설 IP는 재검사하지만 스킴·포트·userinfo·IP-리터럴은 재적용되지 않습니다. network interceptor가 그 이음매처럼 보였지만 아니었습니다: OkHttp는 **연결이 맺어진 뒤에** 호출하므로 요청이 이미 내부 호스트에 닿습니다. 제대로 닫으려면 jdkhttp와 같은 루프 처리가 필요하고 별건으로 추적합니다.
+
 - **`java.net.URI`가 파싱하지 못하는 툴 입력 URL이 검증을 건너뛰지 않도록 수정.** `JsonToolInputGuard`의 수집 단계 공백 두 개 수정: (1) 앞뒤 공백이 있는 whole-string URL(`" http://10.0.0.5/ "`)이 접두사 검사는 통과하지만 `URI` 파싱에 실패해 조용히 건너뛰어짐 — 이제 파싱 전에 trim; (2) 브라우저는 인코딩 없이 보내지만 `java.net.URI`는 거부하는 문자가 경로에 있는 URL(`http://10.0.0.5/a[0]`)도 파싱 실패로 검증을 건너뜀 — 정책은 `scheme://authority`만 판단하므로 authority 이후를 잘라내고 재시도. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
 
 ### Migration
