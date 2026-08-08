@@ -20,6 +20,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
   This is the same shape as the uppercase-scheme bypass fixed in 3.1.1 — a filter at the collection stage letting a URL skip validation entirely — and was found by the first JVM ↔ JS parity audit. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
 
+- **Redirect hops now get the same checks as the first request.** Each adapter previously improvised what to re-validate on a hop, and they disagreed: `httpclient5` re-checked the scheme and re-ran DNS but not port, userinfo or IP-literal rules; `jdkhttp` re-checked **nothing**, because the JDK client follows redirects internally and gives no hook. A redirect off an allowlisted host is the shape SSRF actually takes, so a hop with a weaker check than the first request is a hole with extra steps.
+
+    New `RedirectGuard` in core is the single definition of what a hop must pass — the full `UrlPolicy`, re-thrown as `blocked_redirect`. The loop itself cannot move to core the way it does in the JS sibling, because on the JVM each client owns its own redirect loop; the *decision* does.
+
+    `SsrfGuardedHttpClient` (jdkhttp) now follows and re-validates redirects itself, with fetch-specification semantics matching the JS sibling: `303` (and `301`/`302` on `POST`) downgrade to `GET` and drop the body, credential headers are stripped when a hop crosses an origin, and `maxRedirects` (default 5) bounds the chain. It **requires a delegate built with `HttpClient.Redirect.NEVER`** and throws `IllegalArgumentException` otherwise — a delegate that follows redirects internally would bypass the policy on every hop, and failing loudly beats a guard that quietly does nothing.
+
+    `SafeRedirectStrategy` (httpclient5) takes the `UrlPolicy` and calls the same seam. The three-argument constructor is deprecated; it keeps the pre-3.2.0 scheme-only behaviour so existing code compiles.
+
+    Found by the first JVM ↔ JS parity audit. **OkHttp is not covered by this change** — its `Dns` layer still re-checks the host allowlist and private IPs per hop, but scheme, port, userinfo and IP-literal rules are not re-applied. A network interceptor looked like the seam and is not one: OkHttp invokes it *after* the connection is established, so the request has already reached the internal host. Closing it properly needs the same loop treatment as jdkhttp and is tracked separately.
+
 - **Tool-input URLs that `java.net.URI` cannot parse no longer skip validation.** Two collection-time gaps fixed in `JsonToolInputGuard`: (1) a whole-string URL with surrounding whitespace (`" http://10.0.0.5/ "`) passed the prefix test but failed `URI` parsing and was silently skipped — candidates are now trimmed before parsing; (2) a URL whose path contains characters browsers send unencoded but `java.net.URI` rejects (`http://10.0.0.5/a[0]`) also parse-failed and skipped validation — the guard now retries with everything after the authority dropped, since the policy only judges `scheme://authority`. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
 
 ### Migration
