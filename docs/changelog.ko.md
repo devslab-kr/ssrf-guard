@@ -6,29 +6,41 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
-## [3.2.0] — 리다이렉트 홉 정합성, 스캐너 스킴 커버리지, 그리고 scanEmbedded
+## [3.3.0] — 리다이렉트 홉 정합성과 스캐너 스킴 커버리지
+
+### 보안
+
+- **리다이렉트 홉이 첫 요청과 동일한 검사를 받습니다.** 이전에는 어댑터마다 홉에서 무엇을 재검증할지 즉흥적으로 정했고, 서로 달랐습니다: `httpclient5`는 스킴 재검사 + DNS 재실행만 하고 포트·userinfo·IP-리터럴은 안 봤고, `jdkhttp`는 **아무것도** 안 했습니다(JDK 클라이언트가 내부에서 리다이렉트를 따라가고 훅을 주지 않기 때문). 허용된 호스트에서 튕겨 나가는 리다이렉트야말로 SSRF의 실제 형태라, 첫 요청보다 약한 검사를 받는 홉은 단계만 늘어난 구멍입니다.
+
+    코어에 신설한 `RedirectGuard`가 홉이 통과해야 할 것의 **단일 정의**입니다 — `UrlPolicy` 전체를 적용하고 `blocked_redirect`로 다시 던집니다. 루프 자체는 JS 자매처럼 코어로 옮길 수 없습니다(JVM에서는 각 클라이언트가 자기 루프를 소유). 옮길 수 있고 옮겨야 하는 건 **결정**입니다.
+
+    `SsrfGuardedHttpClient`(jdkhttp)가 이제 리다이렉트를 직접 따라가며 재검증합니다. fetch 스펙 시맨틱을 따르며 JS 자매와 동일합니다: `303`(및 `POST`의 `301`/`302`)은 `GET`으로 강등하고 본문을 버리며, 홉이 origin을 넘으면 자격증명 헤더를 제거하고, `maxRedirects`(기본 5)가 체인을 묶습니다.
+
+    `SafeRedirectStrategy`(httpclient5)는 `UrlPolicy`를 받아 같은 이음매를 호출합니다. 3인자 생성자는 deprecated이며 3.3.0 이전의 스킴 전용 동작을 유지해 기존 코드가 그대로 컴파일됩니다.
+
+    첫 JVM ↔ JS 정합성 감사에서 발견됐습니다. **OkHttp는 이번 변경 범위 밖입니다** — `Dns` 계층이 홉마다 호스트 허용 목록과 사설 IP는 재검사하지만 스킴·포트·userinfo·IP-리터럴은 재적용되지 않습니다. network interceptor가 그 이음매처럼 보였지만 아니었습니다: OkHttp는 **연결이 맺어진 뒤에** 호출하므로 요청이 이미 내부 호스트에 닿습니다. 제대로 닫으려면 jdkhttp와 같은 루프 처리가 필요하고 별건으로 추적합니다.
+
+- **LLM 툴 입력 스캐너가 비-`http(s)` 스킴과 프로토콜 상대 URL을 수집 단계에서 버리지 않습니다.** 툴 입력의 `file://`·`ftp://`·`gopher://` 등 모든 `scheme://` URL이 **정책에 닿기도 전에** 걸러져서, `allowedSchemes`에 의해 거부되는 대신 조용히 가드를 통과했습니다. 페치 시점에 호출자의 스킴을 물려받는 — 따라서 실제 페치 대상인 — 프로토콜 상대 참조(`//evil.example/x`)는 아예 수집되지 않았습니다.
+
+    이제 수집은 관대하게 하고 **판단은 정책이** 합니다. JS 쪽 `@devslab/ssrf-guard-js` 0.2.0에서 한 것과 같은 교정입니다. `file://` 류는 `blocked_scheme`이 되고, `//host`는 https로 해석된 것처럼 호스트 허용 목록으로 검증됩니다. authority가 없는 스킴(`mailto:`·`urn:`·`data:`)은 계속 무시합니다 — 검사할 호스트가 없고 페치 표면도 아닙니다.
+
+    이것은 3.1.1에서 고친 대문자 스킴 우회와 **같은 형태**입니다 — 수집 단계의 필터가 URL을 검증에서 통째로 빠져나가게 하는 것. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
+
+### Migration
+
+**파괴적 변경 1건, `ssrf-guard-jdkhttp`.** `SsrfGuardedHttpClient`가 이제 `HttpClient.Redirect.NEVER`로 만든 delegate를 요구하고 아니면 `IllegalArgumentException`을 던집니다. 리다이렉트를 직접 따라가며 검증하기 때문입니다. 내부에서 따라가는 delegate는 모든 홉에서 정책을 우회시키므로, 조용히 아무것도 안 하는 가드가 되느니 시끄럽게 거부합니다.
+
+`HttpClient.newHttpClient()`와 `HttpClient.newBuilder().build()`는 이미 `NEVER`라 대부분의 코드는 영향이 없습니다. `Redirect.NORMAL`이나 `ALWAYS`를 넘기고 있었다면 빼세요 — 지금까지 리다이렉트 검증을 전혀 못 받고 있었고, 이제 래퍼가 해줍니다.
+
+나머지는 그대로 교체됩니다 — `SafeRedirectStrategy`의 옛 생성자는 deprecated 상태로 계속 컴파일되고, 스캐너 변경은 정책이 봤더라면 애초에 거부했을 URL만 거부합니다.
+
+## [3.2.0] — scanEmbedded: LLM 툴 입력 가드의 문장 중간 URL 탐지
 
 ### Added
 
 - **`scanEmbedded` — LLM 툴 입력 가드의 문장 중간 URL 탐지.** `JsonToolInputGuard`에 opt-in 세 번째 생성자 인자 추가 (어댑터에는 대응 프로퍼티 `ssrf.guard.llm.scan-embedded`, 기본 `false`) — 툴 입력 문자열 안에 문장 중간으로 묻힌 `http(s)://` URL(`"summarize http://169.254.169.254/ please"`)을 추출·검증. 프롬프트 인젝션 지시문이 취하는 전형적인 형태입니다. 기존 whole-string 스캐너에 순수 추가되며, 꼬리에 붙은 문장부호는 제거, 경로의 균형 잡힌 괄호(`/wiki/Foo_(bar)`)는 보존, 앞 텍스트에 붙은 URL(`seehttp://evil.com`)도 탐지. 기본 동작 변경 없음. JS 자매 라이브러리 [`@devslab/ssrf-guard-js` 0.5.0](https://github.com/devslab-kr/ssrf-guard-js)에서 포팅 — AskLinq 통합 피드백에서 나온 옵션입니다.
 
 ### Security
-
-- **LLM 툴 입력 스캐너가 비-`http(s)` 스킴과 프로토콜 상대 URL을 수집 단계에서 버리지 않습니다.** 툴 입력의 `file://`·`ftp://`·`gopher://` 등 모든 `scheme://` URL이 **정책에 닿기도 전에** 걸러져서, `allowedSchemes`에 의해 거부되는 대신 조용히 가드를 통과했습니다. 페치 시점에 호출자의 스킴을 물려받는 — 따라서 실제 페치 대상인 — 프로토콜 상대 참조(`//evil.example/x`)는 아예 수집되지 않았습니다.
-
-    이제 수집은 관대하게 하고 **판단은 정책이** 합니다. JS 쪽 [`@devslab/ssrf-guard-js` 0.2.0](https://github.com/devslab-kr/ssrf-guard-js)에서 한 것과 같은 교정입니다. `file://` 류는 `blocked_scheme`이 되고, `//host`는 https로 해석된 것처럼 호스트 허용 목록으로 검증됩니다. authority가 없는 스킴(`mailto:`·`urn:`·`data:`)은 계속 무시합니다 — 검사할 호스트가 없고 페치 표면도 아닙니다.
-
-    이것은 3.1.1에서 고친 대문자 스킴 우회와 **같은 형태**입니다 — 수집 단계의 필터가 URL을 검증에서 통째로 빠져나가게 하는 것 — 그리고 첫 JVM ↔ JS 정합성 감사에서 발견됐습니다. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
-
-- **리다이렉트 홉이 첫 요청과 동일한 검사를 받습니다.** 이전에는 어댑터마다 홉에서 무엇을 재검증할지 즉흥적으로 정했고, 서로 달랐습니다: `httpclient5`는 스킴 재검사 + DNS 재실행만 하고 포트·userinfo·IP-리터럴은 안 봤고, `jdkhttp`는 **아무것도** 안 했습니다(JDK 클라이언트가 내부에서 리다이렉트를 따라가고 훅을 주지 않기 때문). 허용된 호스트에서 튕겨 나가는 리다이렉트야말로 SSRF의 실제 형태라, 첫 요청보다 약한 검사를 받는 홉은 단계만 늘어난 구멍입니다.
-
-    코어에 신설한 `RedirectGuard`가 홉이 통과해야 할 것의 **단일 정의**입니다 — `UrlPolicy` 전체를 적용하고 `blocked_redirect`로 다시 던집니다. 루프 자체는 JS 자매처럼 코어로 옮길 수 없습니다(JVM에서는 각 클라이언트가 자기 루프를 소유). 옮길 수 있고 옮겨야 하는 건 **결정**입니다.
-
-    `SsrfGuardedHttpClient`(jdkhttp)가 이제 리다이렉트를 직접 따라가며 재검증합니다. fetch 스펙 시맨틱을 따르며 JS 자매와 동일합니다: `303`(및 `POST`의 `301`/`302`)은 `GET`으로 강등하고 본문을 버리며, 홉이 origin을 넘으면 자격증명 헤더를 제거하고, `maxRedirects`(기본 5)가 체인을 묶습니다. **`HttpClient.Redirect.NEVER`로 만든 delegate를 요구**하며 아니면 `IllegalArgumentException`을 던집니다 — 내부에서 리다이렉트를 따라가는 delegate는 모든 홉에서 정책을 우회시키고, 조용히 아무것도 안 하는 가드보다 시끄럽게 실패하는 편이 낫습니다.
-
-    `SafeRedirectStrategy`(httpclient5)는 `UrlPolicy`를 받아 같은 이음매를 호출합니다. 3인자 생성자는 deprecated이며 3.2.0 이전의 스킴 전용 동작을 유지해 기존 코드가 그대로 컴파일됩니다.
-
-    첫 JVM ↔ JS 정합성 감사에서 발견됐습니다. **OkHttp는 이번 변경 범위 밖입니다** — `Dns` 계층이 홉마다 호스트 허용 목록과 사설 IP는 재검사하지만 스킴·포트·userinfo·IP-리터럴은 재적용되지 않습니다. network interceptor가 그 이음매처럼 보였지만 아니었습니다: OkHttp는 **연결이 맺어진 뒤에** 호출하므로 요청이 이미 내부 호스트에 닿습니다. 제대로 닫으려면 jdkhttp와 같은 루프 처리가 필요하고 별건으로 추적합니다.
 
 - **`java.net.URI`가 파싱하지 못하는 툴 입력 URL이 검증을 건너뛰지 않도록 수정.** `JsonToolInputGuard`의 수집 단계 공백 두 개 수정: (1) 앞뒤 공백이 있는 whole-string URL(`" http://10.0.0.5/ "`)이 접두사 검사는 통과하지만 `URI` 파싱에 실패해 조용히 건너뛰어짐 — 이제 파싱 전에 trim; (2) 브라우저는 인코딩 없이 보내지만 `java.net.URI`는 거부하는 문자가 경로에 있는 URL(`http://10.0.0.5/a[0]`)도 파싱 실패로 검증을 건너뜀 — 정책은 `scheme://authority`만 판단하므로 authority 이후를 잘라내고 재시도. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
 

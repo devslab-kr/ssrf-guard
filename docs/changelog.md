@@ -6,29 +6,41 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-## [3.2.0] — Redirect-hop parity, scanner scheme coverage, and scanEmbedded
+## [3.3.0] — Redirect-hop parity and scanner scheme coverage
+
+### Security
+
+- **Redirect hops now get the same checks as the first request.** Each adapter previously improvised what to re-validate on a hop, and they disagreed: `httpclient5` re-checked the scheme and re-ran DNS but not port, userinfo or IP-literal rules; `jdkhttp` re-checked **nothing**, because the JDK client follows redirects internally and gives no hook. A redirect off an allowlisted host is the shape SSRF actually takes, so a hop with a weaker check than the first request is a hole with extra steps.
+
+    New `RedirectGuard` in core is the single definition of what a hop must pass — the full `UrlPolicy`, re-thrown as `blocked_redirect`. The loop itself cannot move to core the way it does in the JS sibling, because on the JVM each client owns its own redirect loop; the *decision* does.
+
+    `SsrfGuardedHttpClient` (jdkhttp) now follows and re-validates redirects itself, with fetch-specification semantics matching the JS sibling: `303` (and `301`/`302` on `POST`) downgrade to `GET` and drop the body, credential headers are stripped when a hop crosses an origin, and `maxRedirects` (default 5) bounds the chain.
+
+    `SafeRedirectStrategy` (httpclient5) takes the `UrlPolicy` and calls the same seam. The three-argument constructor is deprecated; it keeps the pre-3.3.0 scheme-only behaviour so existing code compiles.
+
+    Found by the first JVM ↔ JS parity audit. **OkHttp is not covered by this change** — its `Dns` layer still re-checks the host allowlist and private IPs per hop, but scheme, port, userinfo and IP-literal rules are not re-applied. A network interceptor looked like the seam and is not one: OkHttp invokes it *after* the connection is established, so the request has already reached the internal host. Closing it properly needs the same loop treatment as jdkhttp and is tracked separately.
+
+- **The LLM tool-input scanner no longer drops non-`http(s)` schemes and protocol-relative URLs at the collection stage.** `file://`, `ftp://`, `gopher://` and any other `scheme://` URL in tool input were filtered out *before* the policy ever saw them, so they passed the guard in silence rather than being rejected by `allowedSchemes`. Protocol-relative references (`//evil.example/x`), which inherit the caller's scheme at fetch time and are therefore real fetch targets, were not collected at all.
+
+    Collection is now generous and the **policy decides** — the same correction made on the JS side in `@devslab/ssrf-guard-js` 0.2.0. `file://` and friends now yield `blocked_scheme`; `//host` is validated against the host allowlist as if it resolved to https. Schemes with no authority (`mailto:`, `urn:`, `data:`) are still ignored: they have no host to check and are not fetch surfaces.
+
+    This is the same shape as the uppercase-scheme bypass fixed in 3.1.1 — a filter at the collection stage letting a URL skip validation entirely. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
+
+### Migration
+
+**One breaking change, in `ssrf-guard-jdkhttp`.** `SsrfGuardedHttpClient` now requires a delegate built with `HttpClient.Redirect.NEVER` and throws `IllegalArgumentException` otherwise, because it follows and validates redirects itself. A delegate that follows them internally would bypass the policy on every hop — so this refuses loudly rather than acting as a guard that quietly does nothing.
+
+`HttpClient.newHttpClient()` and `HttpClient.newBuilder().build()` are already `NEVER`, so most code is unaffected. If you passed `Redirect.NORMAL` or `ALWAYS`, drop it: you were getting no redirect validation at all, and you now get it from the wrapper.
+
+Everything else drops in — `SafeRedirectStrategy`'s old constructor still compiles (deprecated), and the scanner change only rejects URLs the policy would always have rejected had it seen them.
+
+## [3.2.0] — scanEmbedded: mid-sentence URL scanning for the LLM tool-input guard
 
 ### Added
 
 - **`scanEmbedded` — mid-sentence URL scanning for the LLM tool-input guard.** `JsonToolInputGuard` gains an opt-in third constructor argument (and the adapters a matching `ssrf.guard.llm.scan-embedded` property, default `false`) that extracts and validates `http(s)://` URLs buried mid-sentence inside tool-input strings (`"summarize http://169.254.169.254/ please"`) — the shape a prompt-injected instruction typically takes. Strictly additive over the whole-string scanner; trailing prose punctuation is trimmed, balanced parentheses in paths (`/wiki/Foo_(bar)`) survive, and a URL glued to preceding text (`seehttp://evil.com`) is still caught. Default behavior unchanged. Ported from the JS sibling [`@devslab/ssrf-guard-js` 0.5.0](https://github.com/devslab-kr/ssrf-guard-js), where the option originated from AskLinq integration feedback.
 
 ### Security
-
-- **The LLM tool-input scanner no longer drops non-`http(s)` schemes and protocol-relative URLs at the collection stage.** `file://`, `ftp://`, `gopher://` and any other `scheme://` URL in tool input were filtered out *before* the policy ever saw them, so they passed the guard in silence rather than being rejected by `allowedSchemes`. Protocol-relative references (`//evil.example/x`), which inherit the caller's scheme at fetch time and are therefore real fetch targets, were not collected at all.
-
-  Collection is now generous and the **policy decides** — the same correction made on the JS side in `@devslab/ssrf-guard-js` 0.2.0. `file://` and friends now yield `blocked_scheme`; `//host` is validated against the host allowlist as if it resolved to https. Schemes with no authority (`mailto:`, `urn:`, `data:`) are still ignored: they have no host to check and are not fetch surfaces.
-
-  This is the same shape as the uppercase-scheme bypass fixed in 3.1.1 — a filter at the collection stage letting a URL skip validation entirely — and was found by the first JVM ↔ JS parity audit. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
-
-- **Redirect hops now get the same checks as the first request.** Each adapter previously improvised what to re-validate on a hop, and they disagreed: `httpclient5` re-checked the scheme and re-ran DNS but not port, userinfo or IP-literal rules; `jdkhttp` re-checked **nothing**, because the JDK client follows redirects internally and gives no hook. A redirect off an allowlisted host is the shape SSRF actually takes, so a hop with a weaker check than the first request is a hole with extra steps.
-
-    New `RedirectGuard` in core is the single definition of what a hop must pass — the full `UrlPolicy`, re-thrown as `blocked_redirect`. The loop itself cannot move to core the way it does in the JS sibling, because on the JVM each client owns its own redirect loop; the *decision* does.
-
-    `SsrfGuardedHttpClient` (jdkhttp) now follows and re-validates redirects itself, with fetch-specification semantics matching the JS sibling: `303` (and `301`/`302` on `POST`) downgrade to `GET` and drop the body, credential headers are stripped when a hop crosses an origin, and `maxRedirects` (default 5) bounds the chain. It **requires a delegate built with `HttpClient.Redirect.NEVER`** and throws `IllegalArgumentException` otherwise — a delegate that follows redirects internally would bypass the policy on every hop, and failing loudly beats a guard that quietly does nothing.
-
-    `SafeRedirectStrategy` (httpclient5) takes the `UrlPolicy` and calls the same seam. The three-argument constructor is deprecated; it keeps the pre-3.2.0 scheme-only behaviour so existing code compiles.
-
-    Found by the first JVM ↔ JS parity audit. **OkHttp is not covered by this change** — its `Dns` layer still re-checks the host allowlist and private IPs per hop, but scheme, port, userinfo and IP-literal rules are not re-applied. A network interceptor looked like the seam and is not one: OkHttp invokes it *after* the connection is established, so the request has already reached the internal host. Closing it properly needs the same loop treatment as jdkhttp and is tracked separately.
 
 - **Tool-input URLs that `java.net.URI` cannot parse no longer skip validation.** Two collection-time gaps fixed in `JsonToolInputGuard`: (1) a whole-string URL with surrounding whitespace (`" http://10.0.0.5/ "`) passed the prefix test but failed `URI` parsing and was silently skipped — candidates are now trimmed before parsing; (2) a URL whose path contains characters browsers send unencoded but `java.net.URI` rejects (`http://10.0.0.5/a[0]`) also parse-failed and skipped validation — the guard now retries with everything after the authority dropped, since the policy only judges `scheme://authority`. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
 
