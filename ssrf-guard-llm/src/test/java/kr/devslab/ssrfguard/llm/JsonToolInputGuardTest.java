@@ -116,12 +116,41 @@ class JsonToolInputGuardTest {
     }
 
     @Test
-    void ignores_non_http_schemes() {
-        // mailto:, urn:uuid:, file:// — should not trip the URL detector
-        // because looksLikeUrl() only matches http(s)://
+    void ignores_schemes_without_an_authority() {
+        // mailto: and urn: have no host to check and are not URL-fetch
+        // surfaces, so collection requires an authority ("://").
         var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
         assertThat(guard.checkOrFormatError("{\"to\":\"mailto:user@example.com\"}")).isNull();
         assertThat(guard.checkOrFormatError("{\"id\":\"urn:uuid:abc\"}")).isNull();
+    }
+
+    @Test
+    void rejects_non_http_schemes_through_the_policy() {
+        // Previously these were dropped at the COLLECTION stage and never
+        // reached the policy, so they passed the guard in silence — the same
+        // shape as the uppercase-scheme bypass fixed in 3.1.1. Collection is
+        // now generous and allowedSchemes decides.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+
+        assertThat(guard.checkOrFormatError("{\"p\":\"file:///etc/passwd\"}"))
+                .contains("\"reason\":\"blocked_scheme\"");
+        assertThat(guard.checkOrFormatError("{\"p\":\"gopher://evil.example/\"}"))
+                .contains("\"reason\":\"blocked_scheme\"");
+        assertThat(guard.checkOrFormatError("{\"p\":\"ftp://evil.example/x\"}"))
+                .contains("\"reason\":\"blocked_scheme\"");
+    }
+
+    @Test
+    void validates_protocol_relative_urls_against_the_host_policy() {
+        // "//evil.example/x" inherits the caller's scheme at fetch time, so
+        // it is a real fetch target. Judged as https for host purposes.
+        var guard = new JsonToolInputGuard(policy(List.of("api.example.com")));
+
+        assertThat(guard.checkOrFormatError("{\"u\":\"//evil.example/x\"}"))
+                .contains("\"reason\":\"blocked_host\"");
+        assertThat(guard.checkOrFormatError("{\"u\":\"//api.example.com/ok\"}")).isNull();
+        // A bare comment-looking string has no host-shaped authority.
+        assertThat(guard.checkOrFormatError("{\"note\":\"// just a comment\"}")).isNull();
     }
 
     @Test

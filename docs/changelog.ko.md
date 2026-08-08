@@ -14,6 +14,12 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ### Security
 
+- **LLM 툴 입력 스캐너가 비-`http(s)` 스킴과 프로토콜 상대 URL을 수집 단계에서 버리지 않습니다.** 툴 입력의 `file://`·`ftp://`·`gopher://` 등 모든 `scheme://` URL이 **정책에 닿기도 전에** 걸러져서, `allowedSchemes`에 의해 거부되는 대신 조용히 가드를 통과했습니다. 페치 시점에 호출자의 스킴을 물려받는 — 따라서 실제 페치 대상인 — 프로토콜 상대 참조(`//evil.example/x`)는 아예 수집되지 않았습니다.
+
+    이제 수집은 관대하게 하고 **판단은 정책이** 합니다. JS 쪽 [`@devslab/ssrf-guard-js` 0.2.0](https://github.com/devslab-kr/ssrf-guard-js)에서 한 것과 같은 교정입니다. `file://` 류는 `blocked_scheme`이 되고, `//host`는 https로 해석된 것처럼 호스트 허용 목록으로 검증됩니다. authority가 없는 스킴(`mailto:`·`urn:`·`data:`)은 계속 무시합니다 — 검사할 호스트가 없고 페치 표면도 아닙니다.
+
+    이것은 3.1.1에서 고친 대문자 스킴 우회와 **같은 형태**입니다 — 수집 단계의 필터가 URL을 검증에서 통째로 빠져나가게 하는 것 — 그리고 첫 JVM ↔ JS 정합성 감사에서 발견됐습니다. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
+
 - **`java.net.URI`가 파싱하지 못하는 툴 입력 URL이 검증을 건너뛰지 않도록 수정.** `JsonToolInputGuard`의 수집 단계 공백 두 개 수정: (1) 앞뒤 공백이 있는 whole-string URL(`" http://10.0.0.5/ "`)이 접두사 검사는 통과하지만 `URI` 파싱에 실패해 조용히 건너뛰어짐 — 이제 파싱 전에 trim; (2) 브라우저는 인코딩 없이 보내지만 `java.net.URI`는 거부하는 문자가 경로에 있는 URL(`http://10.0.0.5/a[0]`)도 파싱 실패로 검증을 건너뜀 — 정책은 `scheme://authority`만 판단하므로 authority 이후를 잘라내고 재시도. `ssrf-guard-springai`, `ssrf-guard-langchain4j` 영향.
 
 ### Migration

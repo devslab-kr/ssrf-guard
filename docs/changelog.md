@@ -14,6 +14,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Security
 
+- **The LLM tool-input scanner no longer drops non-`http(s)` schemes and protocol-relative URLs at the collection stage.** `file://`, `ftp://`, `gopher://` and any other `scheme://` URL in tool input were filtered out *before* the policy ever saw them, so they passed the guard in silence rather than being rejected by `allowedSchemes`. Protocol-relative references (`//evil.example/x`), which inherit the caller's scheme at fetch time and are therefore real fetch targets, were not collected at all.
+
+  Collection is now generous and the **policy decides** — the same correction made on the JS side in `@devslab/ssrf-guard-js` 0.2.0. `file://` and friends now yield `blocked_scheme`; `//host` is validated against the host allowlist as if it resolved to https. Schemes with no authority (`mailto:`, `urn:`, `data:`) are still ignored: they have no host to check and are not fetch surfaces.
+
+  This is the same shape as the uppercase-scheme bypass fixed in 3.1.1 — a filter at the collection stage letting a URL skip validation entirely — and was found by the first JVM ↔ JS parity audit. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
+
 - **Tool-input URLs that `java.net.URI` cannot parse no longer skip validation.** Two collection-time gaps fixed in `JsonToolInputGuard`: (1) a whole-string URL with surrounding whitespace (`" http://10.0.0.5/ "`) passed the prefix test but failed `URI` parsing and was silently skipped — candidates are now trimmed before parsing; (2) a URL whose path contains characters browsers send unencoded but `java.net.URI` rejects (`http://10.0.0.5/a[0]`) also parse-failed and skipped validation — the guard now retries with everything after the authority dropped, since the policy only judges `scheme://authority`. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
 
 ### Migration
