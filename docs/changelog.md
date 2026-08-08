@@ -6,7 +6,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
-## [3.2.0] — scanEmbedded: mid-sentence URL scanning for the LLM tool-input guard
+## [3.2.0] — Redirect-hop parity, scanner scheme coverage, and scanEmbedded
 
 ### Added
 
