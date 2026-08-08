@@ -6,7 +6,7 @@ ssrf-guard의 주요 변경 사항을 기록합니다.
 
 ## [Unreleased]
 
-## [3.2.0] — scanEmbedded: LLM 툴 입력 가드의 문장 중간 URL 탐지
+## [3.2.0] — 리다이렉트 홉 정합성, 스캐너 스킴 커버리지, 그리고 scanEmbedded
 
 ### Added
 

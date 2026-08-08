@@ -7,7 +7,7 @@ The source of truth for the entries below is [docs/changelog.md](docs/changelog.
 
 ## [Unreleased]
 
-## [3.2.0] — scanEmbedded: mid-sentence URL scanning for the LLM tool-input guard
+## [3.2.0] — Redirect-hop parity, scanner scheme coverage, and scanEmbedded
 
 ### Added
 
