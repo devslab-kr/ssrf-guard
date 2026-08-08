@@ -83,7 +83,7 @@ Spring Boot 3.5+ + `RestClient`:
 <dependency>
     <groupId>kr.devslab</groupId>
     <artifactId>ssrf-guard</artifactId>
-    <version>3.2.0</version>
+    <version>3.3.0</version>
 </dependency>
 ```
 
