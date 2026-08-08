@@ -15,6 +15,12 @@ The source of truth for the entries below is [docs/changelog.md](docs/changelog.
 
 ### Security
 
+- **The LLM tool-input scanner no longer drops non-`http(s)` schemes and protocol-relative URLs at the collection stage.** `file://`, `ftp://`, `gopher://` and any other `scheme://` URL in tool input were filtered out *before* the policy ever saw them, so they passed the guard in silence rather than being rejected by `allowedSchemes`. Protocol-relative references (`//evil.example/x`), which inherit the caller's scheme at fetch time and are therefore real fetch targets, were not collected at all.
+
+  Collection is now generous and the **policy decides** — the same correction made on the JS side in `@devslab/ssrf-guard-js` 0.2.0. `file://` and friends now yield `blocked_scheme`; `//host` is validated against the host allowlist as if it resolved to https. Schemes with no authority (`mailto:`, `urn:`, `data:`) are still ignored: they have no host to check and are not fetch surfaces.
+
+  This is the same shape as the uppercase-scheme bypass fixed in 3.1.1 — a filter at the collection stage letting a URL skip validation entirely — and was found by the first JVM ↔ JS parity audit. Affects `ssrf-guard-springai` and `ssrf-guard-langchain4j`.
+
 - **Redirect hops now get the same checks as the first request.** Each adapter previously improvised what to re-validate on a hop, and they disagreed: `httpclient5` re-checked the scheme and re-ran DNS but not port, userinfo or IP-literal rules; `jdkhttp` re-checked **nothing**, because the JDK client follows redirects internally and gives no hook. A redirect off an allowlisted host is the shape SSRF actually takes, so a hop with a weaker check than the first request is a hole with extra steps.
 
     New `RedirectGuard` in core is the single definition of what a hop must pass — the full `UrlPolicy`, re-thrown as `blocked_redirect`. The loop itself cannot move to core the way it does in the JS sibling, because on the JVM each client owns its own redirect loop; the *decision* does.

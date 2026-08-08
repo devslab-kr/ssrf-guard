@@ -120,13 +120,12 @@ public final class JsonToolInputGuard implements ToolInputGuard {
         for (String url : urls) {
             URI uri = parseForValidation(url);
             if (uri == null) continue;
-            String scheme = uri.getScheme();
-            if (scheme == null) continue;
-            // Only http/https. file://, gopher://, etc. would be rejected by
-            // the URL policy anyway, but we don't want to false-positive on
-            // strings like "mailto:..." or "urn:uuid:...".
-            if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) continue;
-
+            // No scheme filtering here, deliberately. Collection is generous
+            // and the POLICY decides — a filter at the collection stage is
+            // what let uppercase-scheme URLs skip validation entirely in
+            // 3.1.1, and the same shape previously let `file://`, `ftp://`
+            // and `gopher://` through untouched. `mailto:` and `urn:` never
+            // reach here because collection requires an authority (`://`).
             try {
                 policy.validate(uri);
             } catch (SsrfGuardException e) {
@@ -181,7 +180,12 @@ public final class JsonToolInputGuard implements ToolInputGuard {
             // Trimmed — looksLikeUrl() tolerates surrounding whitespace, and
             // an untrimmed " http://…" would fail URI parsing and skip
             // validation entirely.
-            if (looksLikeUrl(v)) out.add(v.trim());
+            if (looksLikeUrl(v)) {
+                out.add(v.trim());
+            } else if (looksProtocolRelative(v)) {
+                // Validate the authority as if the URL resolves to https.
+                out.add("https:" + v.trim());
+            }
             if (scanEmbedded) collectEmbedded(v, out);
             return;
         }
@@ -199,17 +203,30 @@ public final class JsonToolInputGuard implements ToolInputGuard {
         }
     }
 
-    // An embedded http(s) URL can start anywhere in the string — even glued
-    // to preceding text ("seehttp://evil.example") — and runs to the first
+    // An embedded URL of ANY scheme can start anywhere in the string — even
+    // glued to preceding text ("seehttp://evil.example"), which fails closed
+    // as an unknown scheme rather than slipping past — and runs to the first
     // whitespace/quote/angle-bracket. Prose punctuation stuck to the tail
     // ("….com/docs.", "(…)") is trimmed afterwards by trimEmbeddedTail.
-    private static final Pattern EMBEDDED_HTTP_URL =
-            Pattern.compile("https?://[^\\s\"'`<>]+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern EMBEDDED_SCHEME_URL =
+            Pattern.compile("[a-z][a-z0-9+.-]*://[^\\s\"'`<>]+", Pattern.CASE_INSENSITIVE);
+
+    // Embedded protocol-relative `//authority`, only at the start of the
+    // string or after whitespace/quote/bracket — so the `//` inside
+    // `scheme://` or a URL path never matches — with the same
+    // host-looking authority requirement as the whole-string variant.
+    private static final Pattern EMBEDDED_PROTOCOL_RELATIVE = Pattern.compile(
+            "(?<=^|[\\s\"'`<(\\[{])//(?:\\[[^\\s\\]]+\\]|[^\\s/?#\"'`<>]*[.:][^\\s/?#\"'`<>]*|localhost)(?:[/?#][^\\s\"'`<>]*)?",
+            Pattern.CASE_INSENSITIVE);
 
     private static void collectEmbedded(String value, List<String> out) {
-        Matcher m = EMBEDDED_HTTP_URL.matcher(value);
+        Matcher m = EMBEDDED_SCHEME_URL.matcher(value);
         while (m.find()) {
             out.add(trimEmbeddedTail(m.group()));
+        }
+        Matcher rel = EMBEDDED_PROTOCOL_RELATIVE.matcher(value);
+        while (rel.find()) {
+            out.add("https:" + trimEmbeddedTail(rel.group()));
         }
     }
 
@@ -251,15 +268,33 @@ public final class JsonToolInputGuard implements ToolInputGuard {
         return n;
     }
 
+    /**
+     * Any scheme followed by an authority ({@code scheme://}). Schemes with
+     * no authority ({@code mailto:}, {@code urn:}, {@code data:}) are not
+     * URL-fetch surfaces and stay ignored. Case-insensitive: URI schemes are
+     * case-insensitive per RFC 3986 §3.1, and a case-sensitive test here is
+     * what let uppercase-scheme URLs bypass the policy before 3.1.1.
+     */
+    private static final Pattern SCHEME_URL =
+            Pattern.compile("^[a-z][a-z0-9+.-]*://", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Protocol-relative {@code //authority} — collected only when the
+     * authority looks like a host (contains a dot or a colon, or is
+     * {@code localhost}), so a bare {@code // comment} stays ignored.
+     */
+    private static final Pattern PROTOCOL_RELATIVE = Pattern.compile(
+            "^//(?:\\[[^\\]]+\\]|[^\\s/?#]*[.:][^\\s/?#]*|localhost)(?:[/?#]|$)",
+            Pattern.CASE_INSENSITIVE);
+
     private static boolean looksLikeUrl(String s) {
         if (s == null) return false;
-        // Lower-case before the prefix test: URI schemes are case-insensitive
-        // (RFC 3986 §3.1), so HTTP:// / HtTpS:// must be detected too. The
-        // downstream scheme check already uses equalsIgnoreCase; a
-        // case-sensitive match here would let an uppercase-scheme URL skip
-        // collection entirely and bypass the policy.
-        String trimmed = s.trim().toLowerCase();
-        return trimmed.startsWith("http://") || trimmed.startsWith("https://");
+        return SCHEME_URL.matcher(s.trim()).find();
+    }
+
+    private static boolean looksProtocolRelative(String s) {
+        if (s == null) return false;
+        return PROTOCOL_RELATIVE.matcher(s.trim()).find();
     }
 
     private String formatErrorPayload(SsrfGuardException e, String url) {
