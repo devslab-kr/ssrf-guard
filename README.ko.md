@@ -2,6 +2,8 @@
 
 [English](README.md) · **한국어**
 
+[문서](https://ssrf-guard.devslab.kr/ko/) · [로드맵](docs/roadmap.ko.md) · [릴리스](docs/releasing.ko.md)
+
 > JVM용 SSRF(Server-Side Request Forgery) 방어 — 화이트리스트 기반 outbound HTTP 가드. 사설망 차단, 리다이렉트 재검증, TOCTOU 완화, 그리고 **Spring AI 툴 URL 검증**으로 LLM 에이전트 SSRF 표면까지 차단.
 
 [![Maven Central](https://img.shields.io/maven-central/v/kr.devslab/ssrf-guard.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/kr.devslab/ssrf-guard)

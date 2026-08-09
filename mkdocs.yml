@@ -123,4 +123,6 @@ nav:
       - Configuration: guides/configuration.md
       - Performance: guides/performance.md
   - Changelog: changelog.md
+  - Roadmap: roadmap.md
+  - Releasing: releasing.md
   - Contributing: contributing.md
