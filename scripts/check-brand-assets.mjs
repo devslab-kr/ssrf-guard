@@ -101,9 +101,9 @@ try {
   for (const marker of ['hero-atmosphere', 'rgb(34 211 238 / .10)', '@media (prefers-color-scheme: dark)']) {
     if (!css.includes(marker)) fail(`docs atmosphere is missing ${marker}`);
   }
-  const slateGlow = /:root\[data-md-color-scheme="slate"\]\s+\.hero-atmosphere > \[aria-hidden="true"\]\.hero-atmosphere__glow\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
-  if (!css.includes(':root[data-md-color-scheme="slate"]')) {
-    fail('docs atmosphere must respond to Material slate color scheme');
+  const slateGlow = /body\[data-md-color-scheme="slate"\]\s+\.hero-atmosphere > \[aria-hidden="true"\]\.hero-atmosphere__glow\s*\{([\s\S]*?)\n\}/.exec(css)?.[1] ?? '';
+  if (!css.includes('body[data-md-color-scheme="slate"]')) {
+    fail('docs atmosphere must respond to Material slate color scheme on its body DOM target');
   }
   if (!slateGlow.includes('rgb(34 211 238 / .10)')) {
     fail('Material slate hero glow must use cyan capped at 10% alpha');

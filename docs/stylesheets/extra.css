@@ -73,13 +73,13 @@
 }
 
 /* Material can select its palette independently of the operating-system theme. */
-:root[data-md-color-scheme="slate"] {
+body[data-md-color-scheme="slate"] {
   --ssrf-brand-accent: #6ee7b7;
   --ssrf-brand-oss: #22d3ee;
   --ssrf-brand-panel: rgb(110 231 183 / .08);
 }
 
-:root[data-md-color-scheme="slate"] .hero-atmosphere > [aria-hidden="true"].hero-atmosphere__glow {
+body[data-md-color-scheme="slate"] .hero-atmosphere > [aria-hidden="true"].hero-atmosphere__glow {
   background: radial-gradient(ellipse 46% 68% at 86% 22%, rgb(34 211 238 / .10), transparent 72%);
 }
 
