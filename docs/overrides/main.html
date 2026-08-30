@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+  {{ super() }}
+  <link rel="author" href="https://devslab.kr/brand/open-source/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="DevsLab Open Source" />
+  <meta property="og:title" content="ssrf-guard O02 | JVM SSRF protection" />
+  <meta property="og:description" content="Whitelist-based outbound HTTP guard with private-network blocking, redirect validation, and TOCTOU mitigation." />
+  <meta property="og:image" content="https://ssrf-guard.devslab.kr/assets/social-preview.png" />
+  <meta property="og:image:alt" content="ssrf-guard O02 protected boundary mark. Open source by DevsLab." />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ssrf-guard O02 | JVM SSRF protection" />
+  <meta name="twitter:description" content="Whitelist-based outbound HTTP guard with private-network blocking and redirect validation." />
+  <meta name="twitter:image" content="https://ssrf-guard.devslab.kr/assets/social-preview.png" />
+  <meta name="twitter:image:alt" content="ssrf-guard O02 protected boundary mark. Open source by DevsLab." />
+{% endblock %}

@@ -10,7 +10,10 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  custom_dir: docs/overrides
   language: en
+  logo: assets/logo.svg
+  favicon: assets/favicon.svg
   features:
     - navigation.tabs
     - navigation.sections
@@ -42,6 +45,9 @@ theme:
     code: JetBrains Mono
   icon:
     repo: fontawesome/brands/github
+
+extra_css:
+  - stylesheets/extra.css
 
 plugins:
   - search:
