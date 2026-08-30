@@ -1,6 +1,6 @@
 # Roadmap
 
-[한국어](roadmap.ko.md)
+[한국어](/ko/roadmap/)
 
 What is done, what is queued, and what is deliberately not planned.
 Started 2026-08-09.

@@ -1,6 +1,6 @@
 # Releasing
 
-[한국어](releasing.ko.md)
+[한국어](/ko/releasing/)
 
 How a version of `kr.devslab:ssrf-guard` reaches Maven Central.
 Maintainers only.
