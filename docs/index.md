@@ -1,5 +1,13 @@
 # ssrf-guard
 
+<div class="hero-atmosphere" data-atmosphere="project">
+  <div class="hero-atmosphere__glow" aria-hidden="true"></div>
+  <div class="oss-identity">
+    <img class="oss-identity__mark" src="assets/logo.svg" alt="" aria-hidden="true">
+    <p class="oss-identity__copy">Open source by <a href="https://devslab.kr/brand/open-source/">DevsLab</a> · Registry O02</p>
+  </div>
+</div>
+
 > SSRF (Server-Side Request Forgery) protection for the JVM — whitelist-based outbound HTTP guard with private-network blocking, redirect validation, TOCTOU mitigation, and **LLM agent tool URL validation** for Spring AI.
 
 ## Why

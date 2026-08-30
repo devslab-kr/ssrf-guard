@@ -1,5 +1,11 @@
 # ssrf-guard
 
+<p align="center">
+  <a href="https://devslab.kr/brand/open-source/"><img src=".github/assets/readme-header.png" alt="ssrf-guard O02 protected boundary mark" width="960"></a>
+</p>
+
+Open source by [DevsLab](https://devslab.kr/brand/open-source/) · Registry O02
+
 **English** · [한국어](README.ko.md)
 
 [Docs](https://ssrf-guard.devslab.kr/) · [Roadmap](docs/roadmap.md) · [Releasing](docs/releasing.md)

@@ -1,5 +1,13 @@
 # ssrf-guard
 
+<div class="hero-atmosphere" data-atmosphere="project">
+  <div class="hero-atmosphere__glow" aria-hidden="true"></div>
+  <div class="oss-identity">
+    <img class="oss-identity__mark" src="assets/logo.svg" alt="" aria-hidden="true">
+    <p class="oss-identity__copy"><a href="https://devslab.kr/brand/open-source/">DevsLab 오픈소스</a> · Registry O02</p>
+  </div>
+</div>
+
 > JVM용 SSRF(Server-Side Request Forgery) 방어 라이브러리 — 화이트리스트 기반 외부 HTTP 가드, 사설 네트워크 차단, 리다이렉트 재검증, TOCTOU 방어, **Spring AI LLM 에이전트 툴 URL 검증** 포함.
 
 ## 왜 필요한가
