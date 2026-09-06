@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'tools/publisher/**'
+      - 'README*.md'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
   workflow_dispatch:
@@ -25,6 +27,15 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Set up Node for publisher tooling
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check shared publisher attribution
+        run: |
+          npm ci --prefix tools/publisher --ignore-scripts
+          npm run check --prefix tools/publisher
 
       - name: Set up Python
         uses: actions/setup-python@v6

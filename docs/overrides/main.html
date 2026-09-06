@@ -15,3 +15,8 @@
   <meta name="twitter:image" content="https://ssrf-guard.devslab.kr/assets/social-preview.png" />
   <meta name="twitter:image:alt" content="ssrf-guard O02 protected boundary mark. Open source by DevsLab." />
 {% endblock %}
+
+{% block footer %}
+  <div class="md-grid">{% include "publisher.html" %}</div>
+  {{ super() }}
+{% endblock %}

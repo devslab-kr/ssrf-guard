@@ -1,0 +1,7 @@
+{
+  "name": "ssrf-guard",
+  "kind": "mkdocs",
+  "url": "https://ssrf-guard.devslab.kr/",
+  "repository": "https://github.com/devslab-kr/ssrf-guard",
+  "pages": []
+}

@@ -4,7 +4,11 @@
   <a href="https://devslab.kr/brand/open-source/"><img src=".github/assets/readme-header.png" alt="ssrf-guard O02 보호 경계 마크" width="960"></a>
 </p>
 
-[DevsLab 오픈소스](https://devslab.kr/brand/open-source/) · Registry O02
+<!-- publisher:start -->
+Open source by [데브스랩(DevsLab)](https://devslab.kr/).
+<!-- publisher:end -->
+
+Registry O02
 
 [English](README.md) · **한국어**
 
