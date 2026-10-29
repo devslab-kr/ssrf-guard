@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "https://github.com/devslab-kr/dds",
+    "ref": "49baacb7aeaf0ea49dadb30c3e5a50b6bb1bf0eb",
+    "contentSha256": "8c931915f9ed98381ce74041334dd694cb74795a060b31055dccb36bf0136c44"
+  },
+  "css": {
+    "file": "fonts.css",
+    "bytes": 4773,
+    "sha256": "fca34194dd4211c391d55c7970e5df70fb9e1d1e4d76546ee9941df391e84230"
+  },
+  "tokens": {
+    "sans": "Geist, \"DDS Pretendard Atomic\", -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif",
+    "mono": "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+  },
+  "assets": [
+    {
+      "id": "geist/geist-cyrillic-ext-wght-normal.woff2",
+      "file": "fonts/geist-geist-cyrillic-ext-wght-normal-2317fa4bb293.woff2",
+      "family": "Geist",
+      "bytes": 7420,
+      "sha256": "2317fa4bb293c9c0b110e18315d529235c47a0ddd3338cea3d8c7955e927899e",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist",
+        "version": "5.3.0",
+        "integrity": "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist/geist-cyrillic-wght-normal.woff2",
+      "file": "fonts/geist-geist-cyrillic-wght-normal-689443969494.woff2",
+      "family": "Geist",
+      "bytes": 15084,
+      "sha256": "6894439694946a589d157ece003086960a6a4013d74a813dab7602efdb3d8c09",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist",
+        "version": "5.3.0",
+        "integrity": "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist/geist-vietnamese-wght-normal.woff2",
+      "file": "fonts/geist-geist-vietnamese-wght-normal-8fa40e5d2482.woff2",
+      "family": "Geist",
+      "bytes": 8004,
+      "sha256": "8fa40e5d248247735eb97a0bd593b8852440430600d6ba01364c31fe0abc1fe1",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist",
+        "version": "5.3.0",
+        "integrity": "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist/geist-latin-ext-wght-normal.woff2",
+      "file": "fonts/geist-geist-latin-ext-wght-normal-824f485b5d26.woff2",
+      "family": "Geist",
+      "bytes": 16512,
+      "sha256": "824f485b5d26e2f2da3c2b236132ece1bc8e4e43373452950bb0e40548b4313f",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist",
+        "version": "5.3.0",
+        "integrity": "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist/geist-latin-wght-normal.woff2",
+      "file": "fonts/geist-geist-latin-wght-normal-19f9c92546aa.woff2",
+      "family": "Geist",
+      "bytes": 29400,
+      "sha256": "19f9c92546aa300c312235e3125af1b81394d8db9a4bc4a425cd5b641d2d54e1",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist",
+        "version": "5.3.0",
+        "integrity": "sha512-j0m+vLQuG5XAYoHtGCVu0spvlGreR3EzpECUVzkFmI1mTVnAO38l/NEPDCFgZ177JxzYJCLSmTQibIiYPilGrA==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist-mono/geist-mono-cyrillic-ext-wght-normal.woff2",
+      "file": "fonts/geist-mono-geist-mono-cyrillic-ext-wght-normal-cd8800999070.woff2",
+      "family": "Geist Mono",
+      "bytes": 6176,
+      "sha256": "cd8800999070b729e1cc0bf7a48da6c3ac096a044251171b9a7574b56d96d4b4",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist-mono",
+        "version": "5.3.0",
+        "integrity": "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist-mono/geist-mono-cyrillic-wght-normal.woff2",
+      "file": "fonts/geist-mono-geist-mono-cyrillic-wght-normal-4866787fc952.woff2",
+      "family": "Geist Mono",
+      "bytes": 12940,
+      "sha256": "4866787fc952dbdbd591d6923d67bc21c2d894b93f34ab69d0cdf25d47bfb2df",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist-mono",
+        "version": "5.3.0",
+        "integrity": "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist-mono/geist-mono-symbols2-wght-normal.woff2",
+      "file": "fonts/geist-mono-geist-mono-symbols2-wght-normal-5bb66d8319ba.woff2",
+      "family": "Geist Mono",
+      "bytes": 5812,
+      "sha256": "5bb66d8319ba1602bb2eb67dce8d79c2b4687be8ce183a0574433e949b3c60ad",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist-mono",
+        "version": "5.3.0",
+        "integrity": "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist-mono/geist-mono-vietnamese-wght-normal.woff2",
+      "file": "fonts/geist-mono-geist-mono-vietnamese-wght-normal-d39b60889a94.woff2",
+      "family": "Geist Mono",
+      "bytes": 7696,
+      "sha256": "d39b60889a94a527a7f73c7988a2d6efb6c081614aef683b0b386c02d74c2175",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist-mono",
+        "version": "5.3.0",
+        "integrity": "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist-mono/geist-mono-latin-ext-wght-normal.woff2",
+      "file": "fonts/geist-mono-geist-mono-latin-ext-wght-normal-1a189eb997c3.woff2",
+      "family": "Geist Mono",
+      "bytes": 14696,
+      "sha256": "1a189eb997c3e2ece68373e387afaec9e8617424186c4b1ab3cff7c54ba6223b",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist-mono",
+        "version": "5.3.0",
+        "integrity": "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "geist-mono/geist-mono-latin-wght-normal.woff2",
+      "file": "fonts/geist-mono-geist-mono-latin-wght-normal-684ad5b531f8.woff2",
+      "family": "Geist Mono",
+      "bytes": 23128,
+      "sha256": "684ad5b531f81d43c1e8c7038262d5db7cdc1f68006e04d6c7769efa8d33c8cc",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "@fontsource-variable/geist-mono",
+        "version": "5.3.0",
+        "integrity": "sha512-vBbuwDEo9AkrqADMXOrlAR3DFcJi4/JxeuU43FoiQERnNwsfXNnvxvReZG02cQKmyk4DZkZdBZX3oTDvy2zBAw==",
+        "license": "OFL-1.1"
+      }
+    },
+    {
+      "id": "pretendard/PretendardVariable.woff2",
+      "file": "fonts/pretendard-PretendardVariable-9599f12fd42f.woff2",
+      "family": "Pretendard",
+      "bytes": 2057688,
+      "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4",
+      "license": "OFL-1.1",
+      "source": {
+        "package": "pretendard",
+        "version": "1.3.9",
+        "integrity": "sha512-PaQAADyLY5v4kYFwkpSJHbSSYIkiriY/1xXw75TKoZ9UQQqeU+tvP05yTdZAWibiIYoo8ZKtRv8PM7w0IaywSw==",
+        "license": "OFL-1.1"
+      }
+    }
+  ],
+  "licenses": [
+    {
+      "family": "Geist",
+      "file": "licenses/geist.txt",
+      "bytes": 4486,
+      "sha256": "71609cbb5c78b5870d712eab73a31d76622635c6ed034ab5cee3b9ecbda8685f",
+      "license": "OFL-1.1"
+    },
+    {
+      "family": "Geist Mono",
+      "file": "licenses/geist-mono.txt",
+      "bytes": 4498,
+      "sha256": "cc815ed4fc045f0e991abb10395b7932bd028c6a067deb13316d6002105074e6",
+      "license": "OFL-1.1"
+    },
+    {
+      "family": "Pretendard",
+      "file": "licenses/pretendard.txt",
+      "bytes": 4419,
+      "sha256": "b04538c9abec39a3db75108cf0af0fd9c77032fe8aa2cf38345b4d250e98e38e",
+      "license": "OFL-1.1"
+    }
+  ],
+  "preload": {
+    "default": [
+      "geist/geist-latin-wght-normal.woff2",
+      "pretendard/PretendardVariable.woff2"
+    ],
+    "monospace": [
+      "geist-mono/geist-mono-latin-wght-normal.woff2"
+    ]
+  },
+  "cache": {
+    "control": "public, max-age=31536000, immutable",
+    "scope": "Exact known content-hashed public WOFF2 paths only; host adapter preserves private/error responses"
+  }
+}

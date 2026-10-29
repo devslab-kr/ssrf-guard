@@ -1,0 +1,74 @@
+[
+  {
+    "path": "/assets/dds-fonts/fonts/geist-geist-cyrillic-ext-wght-normal-2317fa4bb293.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-geist-cyrillic-wght-normal-689443969494.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-geist-vietnamese-wght-normal-8fa40e5d2482.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-geist-latin-ext-wght-normal-824f485b5d26.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-geist-latin-wght-normal-19f9c92546aa.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-mono-geist-mono-cyrillic-ext-wght-normal-cd8800999070.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-mono-geist-mono-cyrillic-wght-normal-4866787fc952.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-mono-geist-mono-symbols2-wght-normal-5bb66d8319ba.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-mono-geist-mono-vietnamese-wght-normal-d39b60889a94.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-mono-geist-mono-latin-ext-wght-normal-1a189eb997c3.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/geist-mono-geist-mono-latin-wght-normal-684ad5b531f8.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  },
+  {
+    "path": "/assets/dds-fonts/fonts/pretendard-PretendardVariable-9599f12fd42f.woff2",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000, immutable"
+    }
+  }
+]
