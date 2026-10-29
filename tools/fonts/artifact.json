@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "name": "@devslab/family-fonts",
+  "version": "0.0.0-dds.8c931915f9ed",
+  "file": "vendor/devslab-family-fonts-a162eeae087a.tgz",
+  "sha256": "a162eeae087ad2304edb45cfbedaaed0d0d763988f12acb81f830857f0854b9b",
+  "integrity": "sha512-VX662QJQN+Rbb7bLWffoSZxLeiZfHE5YBU5+NgF5iFAAmPj5PNFmg0r/YA6QPw0pFlBQoHugt4Am2t086B0RPw==",
+  "source": {
+    "repository": "https://github.com/devslab-kr/dds",
+    "ref": "49baacb7aeaf0ea49dadb30c3e5a50b6bb1bf0eb",
+    "contentSha256": "8c931915f9ed98381ce74041334dd694cb74795a060b31055dccb36bf0136c44"
+  },
+  "distribution": "private-vendored"
+}
