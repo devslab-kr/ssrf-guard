@@ -1,4 +1,6 @@
 :root {
+  --md-text-font: var(--dds-font-family-sans);
+  --md-code-font: var(--dds-font-family-mono);
   --ssrf-brand-accent: #1b6b4a;
   --ssrf-brand-oss: #0e7490;
   --ssrf-brand-panel: rgb(27 107 74 / .06);

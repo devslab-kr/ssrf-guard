@@ -8,6 +8,9 @@ repo_name: devslab-kr/ssrf-guard
 repo_url: https://github.com/devslab-kr/ssrf-guard
 edit_uri: edit/main/docs/
 
+hooks:
+  - tools/fonts/mkdocs_hook.py
+
 theme:
   name: material
   custom_dir: docs/overrides
@@ -45,7 +48,6 @@ theme:
     repo: fontawesome/brands/github
 
 extra_css:
-  - stylesheets/fonts.css
   - stylesheets/extra.css
 
 plugins:
