@@ -91,3 +91,19 @@ body[data-md-color-scheme="slate"] .hero-atmosphere > [aria-hidden="true"].hero-
     display: none;
   }
 }
+
+/* Keep the home module table box stable while Material adds its scroll wrappers.
+ * The wrapper contributes .5em at the article font size (.4rem), and a bare
+ * table has a different following-heading margin. Match only that initial box;
+ * these selectors stop matching after wrapping, leaving its final layout alone.
+ */
+@media screen {
+  .md-typeset:has(> h1#ssrf-guard) > table:not([class]) {
+    min-width: min-content;
+    margin-bottom: .4rem;
+  }
+
+  .md-typeset:has(> h1#ssrf-guard) > table:not([class]) + h2 {
+    margin-top: 1.6em;
+  }
+}
